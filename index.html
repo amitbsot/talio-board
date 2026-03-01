@@ -2,8 +2,8 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Talio-board - המשחק שמשגע את כולם</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Talio-board - משחק לוח</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -13,67 +13,124 @@
             padding: 0;
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            min-height: 100vh;
+            overflow-y: auto; 
+            overflow-x: hidden;
         }
 
-        /* --- הלוח המשותף (חלק עליון) --- */
-        #shared-board {
-            background-color: #16213e;
-            padding: 20px;
-            text-align: center;
-            border-bottom: 4px solid #0f3460;
-            flex: 1;
+        /* --- מסך לובי --- */
+        #lobby {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(26, 26, 46, 0.98);
             display: flex;
             flex-direction: column;
             justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .team-btn {
+            width: 80%;
+            max-width: 300px;
+            padding: 20px;
+            font-size: 22px;
+            margin: 10px;
+            border-radius: 15px;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .team-btn.blue { background-color: #0f3460; color: #4facfe; border-color: #4facfe; }
+        .team-btn.red { background-color: #4a0e1c; color: #ff0844; border-color: #ff0844; }
+
+        /* --- הלוח המשותף --- */
+        #shared-board {
+            background-color: #16213e;
+            padding: 15px 10px;
+            text-align: center;
+            border-bottom: 4px solid #0f3460;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            z-index: 10;
         }
 
         .game-title {
-            font-size: 36px;
+            font-size: 26px;
             font-weight: 900;
             color: #ffb703;
-            margin-bottom: 5px;
             letter-spacing: 2px;
-            text-transform: uppercase;
+            margin-bottom: 5px;
         }
 
-        .room-id-display {
-            font-size: 14px;
-            color: #4facfe;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .score-board {
+        /* --- עיצוב משטח המשבצות --- */
+        .board-grid {
             display: flex;
-            justify-content: space-around;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            margin: 10px auto;
+            max-width: 600px;
+            padding: 10px;
+            background-color: #1a1a2e;
+            border-radius: 10px;
+            border: 2px solid #333;
         }
 
-        .team-blue { color: #4facfe; }
-        .team-red { color: #ff0844; }
+        .square {
+            width: 35px;
+            height: 35px;
+            background-color: #2a2a4a;
+            border: 1px solid #111;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #ccc;
+            transition: background 0.4s ease, transform 0.2s ease;
+            font-weight: bold;
+        }
+
+        .square.finish {
+            border: 2px solid #ffb703;
+            color: #ffb703;
+        }
+
+        .top-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            padding: 0 10px;
+        }
 
         #timer {
-            font-size: 48px;
+            font-size: 40px;
             font-weight: bold;
             color: #e94560;
-            margin: 10px 0;
+            margin-top: 5px;
         }
 
-        #status {
-            font-size: 18px;
-            color: #ccc;
+        #btn-reset {
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
         }
 
-        /* --- האזור האישי (חלק תחתון) --- */
+        /* --- האזור האישי ואנימציות Fade --- */
         #personal-area {
-            padding: 20px;
-            flex: 2;
+            padding: 20px 10px 40px 10px;
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-start;
         }
 
         .card {
@@ -81,20 +138,29 @@
             color: black;
             width: 90%;
             max-width: 350px;
-            border-radius: 15px;
+            border-radius: 20px;
             padding: 20px;
             text-align: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
             margin-bottom: 20px;
+            margin-top: 10px;
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .fade-out {
+            opacity: 0 !important;
+            transform: translateY(15px) !important;
         }
 
         .main-word {
-            font-size: 36px;
-            font-weight: bold;
+            font-size: 32px;
+            font-weight: 900;
             color: #1a1a2e;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #ccc;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
+            border-bottom: 3px solid #eee;
+            padding-bottom: 5px;
         }
 
         .taboo-list {
@@ -103,62 +169,75 @@
             margin: 0;
             font-size: 20px;
             color: #d90429;
+            font-weight: bold;
         }
 
-        .taboo-list li {
-            margin: 5px 0;
-        }
+        .taboo-list li { margin: 6px 0; }
 
         .controls {
             display: flex;
-            width: 100%;
+            width: 95%;
             max-width: 400px;
             gap: 15px;
         }
 
         button {
             flex: 1;
-            padding: 20px;
-            font-size: 22px;
+            padding: 18px 10px;
+            font-size: 20px;
             font-weight: bold;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             color: white;
             transition: transform 0.1s;
         }
 
-        button:active {
-            transform: scale(0.95);
-        }
-
-        .btn-correct { background-color: #28a745; }
-        .btn-skip { background-color: #dc3545; }
-        .btn-start { background-color: #ffb703; color: black; width: 100%; max-width: 350px; }
+        button:active { transform: scale(0.95); }
+        .btn-correct { background-color: #28a745; box-shadow: 0 4px 0 #1e7e34;}
+        .btn-skip { background-color: #dc3545; box-shadow: 0 4px 0 #bd2130;}
+        .btn-start { background-color: #ffb703; color: black; width: 90%; max-width: 350px; margin-top: 20px; box-shadow: 0 4px 0 #d49800;}
 
         .hidden { display: none !important; }
+
+        /* --- התאמה רספונסיבית --- */
+        @media (max-width: 400px) {
+            .square { width: 28px; height: 28px; font-size: 10px; }
+            .game-title { font-size: 22px; }
+            .main-word { font-size: 28px; }
+            .taboo-list { font-size: 18px; }
+            button { font-size: 18px; padding: 15px 5px; }
+        }
     </style>
 </head>
 <body>
 
+    <div id="lobby">
+        <h1 class="game-title" style="font-size: 42px; margin-bottom: 10px; text-align: center;">TALIO-BOARD</h1>
+        <h3 style="margin-bottom: 40px; color: #ccc;">בחר את הקבוצה שלך:</h3>
+        <button class="team-btn blue" onclick="joinTeam('blue')">אני בקבוצה הכחולה</button>
+        <button class="team-btn red" onclick="joinTeam('red')">אני בקבוצה האדומה</button>
+    </div>
+
     <div id="shared-board">
-        <div class="game-title">TALIO-BOARD</div>
-        <div class="room-id-display" id="room-display">ממתין לחיבור...</div>
-        
-        <div class="score-board">
-            <div class="team-blue">נקודות: <span id="score-blue">0</span></div>
+        <div class="top-info">
+            <button id="btn-reset" onclick="resetGame()">משחק חדש</button>
+            <div class="game-title">TALIO-BOARD</div>
+            <div style="font-size: 12px; color: #ccc;" id="room-display"></div>
         </div>
+        
+        <div class="board-grid" id="board-grid"></div>
+
         <div id="timer">01:00</div>
-        <div id="status">טוען נתונים...</div>
+        <div id="status" style="margin-top:5px; color:#aaa; font-weight:bold;">ממתין לשחקנים...</div>
     </div>
 
     <div id="personal-area">
-        <button id="btn-start" class="btn-start hidden">התחל תור</button>
+        <button id="btn-start" class="btn-start hidden">התחל תור לקבוצה שלי</button>
 
         <div id="card-container" class="card hidden">
-            <div class="main-word" id="main-word">מילה להסבר</div>
-            <ul class="taboo-list" id="taboo-words">
-                </ul>
+            <div class="main-word" id="main-word">מילה</div>
+            <ul class="taboo-list" id="taboo-words"></ul>
         </div>
 
         <div id="controls" class="controls hidden">
@@ -175,179 +254,331 @@
             apiKey: "AIzaSyDiGUmCG08Ke6JYYR_gW6r-JMwdxt0aJDk",
             authDomain: "talio-board.firebaseapp.com",
             databaseURL: "https://talio-board-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "talio-board",
-            storageBucket: "talio-board.firebasestorage.app",
-            messagingSenderId: "744415058656",
-            appId: "1:744415058656:web:af49e5ad7cd600b1fd0e85"
+            projectId: "talio-board"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        
-        // --- מנגנון חדרים ---
-        let roomId = prompt("ברוכים הבאים ל-Talio-board!\nהכנס מספר חדר כדי לשחק עם חברים (לדוגמה: 1234):", "1234");
-        if (!roomId || roomId.trim() === "") {
-            roomId = "main_room"; 
+
+        // --- בניית הלוח (0 עד 30) ---
+        const boardGrid = document.getElementById('board-grid');
+        const MAX_STEPS = 30;
+        for(let i = 0; i <= MAX_STEPS; i++) {
+            let sq = document.createElement('div');
+            sq.className = 'square';
+            sq.id = 'sq-' + i;
+            if(i === 0) sq.innerText = 'התחלה';
+            else if(i === MAX_STEPS) { sq.innerText = 'סיום'; sq.classList.add('finish'); }
+            else sq.innerText = i;
+            boardGrid.appendChild(sq);
         }
-        
-        document.getElementById('room-display').textContent = "חדר מס': " + roomId;
+
+        // --- מאגר 100 המילים ---
+        const cards = [
+            {"word":"כלב","taboo":["חיה","נבחן","חתול","עצם","רצועה"]},
+            {"word":"שמש","taboo":["יום","אור","חם","שמיים","צהוב"]},
+            {"word":"אופניים","taboo":["גלגלים","לרכוב","פדלים","קסדה","כביש"]},
+            {"word":"פיצה","taboo":["איטליה","גבינה","אוכל","משלוח","משולש"]},
+            {"word":"ים","taboo":["מים","חול","גלים","קיץ","מטקות"]},
+            {"word":"מחשב","taboo":["מקלדת","עכבר","מסך","אינטרנט","לעבוד"]},
+            {"word":"טיסה","taboo":["מטוס","שדה תעופה","חו''ל","כרטיס","כנפיים"]},
+            {"word":"ירושלים","taboo":["עיר","בירה","כותל","קודש","זהב"]},
+            {"word":"כדורגל","taboo":["מגרש","שער","מסי","ספורט","לבעוט"]},
+            {"word":"פלאפון","taboo":["מסך","להתקשר","סוללה","אפל","מטען"]},
+            {"word":"קפה","taboo":["בוקר","לשתות","חלב","ספל","הפוך"]},
+            {"word":"מיטה","taboo":["לישון","שמיכה","כרית","לילה","מזרן"]},
+            {"word":"רכבת","taboo":["פסים","תחנה","קרון","כרטיס","לנסוע"]},
+            {"word":"מורה","taboo":["בית ספר","תלמידים","כיתה","לוח","ללמד"]},
+            {"word":"סרט","taboo":["קולנוע","פופקורן","לראות","שחקן","טלוויזיה"]},
+            {"word":"חורף","taboo":["קר","גשם","מטריה","עונה","מעיל"]},
+            {"word":"גיטרה","taboo":["לנגן","מיתרים","כלי","מוזיקה","חשמלית"]},
+            {"word":"רופא","taboo":["חולה","בית חולים","תרופה","מרפאה","בריאות"]},
+            {"word":"שוקולד","taboo":["מתוק","קקאו","חום","פרה","טעים"]},
+            {"word":"שעון","taboo":["זמן","מחוגים","יד","שעה","לענוד"]},
+            {"word":"מזגן","taboo":["קור","חום","להדליק","קיץ","שלט"]},
+            {"word":"אבטיח","taboo":["אדום","גרעינים","קיץ","פרי","ירוק"]},
+            {"word":"משטרה","taboo":["ניידת","כחול","שוטר","לעצור","פשע"]},
+            {"word":"מפתח","taboo":["דלת","מנעול","לפתוח","בית","אוטו"]},
+            {"word":"במבה","taboo":["בוטנים","צהוב","חטיף","תינוק","אוסם"]},
+            {"word":"כסף","taboo":["שטר","מטבע","ארנק","לקנות","בנק"]},
+            {"word":"ספר","taboo":["לקרוא","דפים","סיפור","ספריה","סופר"]},
+            {"word":"מצלמה","taboo":["תמונה","לצלם","פלאש","וידאו","טלפון"]},
+            {"word":"מסעדה","taboo":["לאכול","מלצר","תפריט","טיפ","להזמין"]},
+            {"word":"מקרר","taboo":["מטבח","אוכל","קר","להקפיא","לפתוח"]},
+            {"word":"סבון","taboo":["לשטוף","ידיים","מקלחת","קצף","נקי"]},
+            {"word":"צבע","taboo":["לצייר","מכחול","קיר","אדום","כחול"]},
+            {"word":"שן","taboo":["פה","רופא","לצחצח","לבן","לנשוך"]},
+            {"word":"תפוח","taboo":["עץ","אדום","ירוק","פרי","נחש"]},
+            {"word":"סכין","taboo":["לחתוך","מזלג","חד","מטבח","דם"]},
+            {"word":"בננה","taboo":["צהוב","קוף","פרי","לקלף","ארוך"]},
+            {"word":"חולצה","taboo":["ללבוש","בגד","ארון","שרוולים","מכנסיים"]},
+            {"word":"נעל","taboo":["רגל","שרוכים","סניקרס","הליכה","ספורט"]},
+            {"word":"חתול","taboo":["חיה","מיילל","עכבר","פרווה","שפם"]},
+            {"word":"דג","taboo":["מים","לים","לשחות","אקווריום","חכה"]},
+            {"word":"ציפור","taboo":["לעוף","כנפיים","שמיים","קן","נוצות"]},
+            {"word":"אריה","taboo":["מלך","חיות","שאגה","ספארי","לביאה"]},
+            {"word":"נחש","taboo":["זוחל","ארס","להכיש","ארוך","חיה"]},
+            {"word":"פיל","taboo":["גדול","חדק","אפור","אפריקה","חיה"]},
+            {"word":"קוף","taboo":["בננה","עץ","גן חיות","לטפס","חיה"]},
+            {"word":"פרח","taboo":["צמח","אדמה","ריח","עלי כותרת","גינה"]},
+            {"word":"אש","taboo":["חם","לשרוף","מדורה","אדום","מים"]},
+            {"word":"שלג","taboo":["לבן","קר","חורף","בובה","חרמון"]},
+            {"word":"ענן","taboo":["שמיים","לבן","גשם","חורף","לעוף"]},
+            {"word":"ירח","taboo":["לילה","שמיים","כוכבים","לבן","חלל"]},
+            {"word":"כוכב","taboo":["שמיים","לילה","זוהר","נופל","חלל"]},
+            {"word":"אוהל","taboo":["קמפינג","לישון","בחוץ","להקים","טיול"]},
+            {"word":"בריכה","taboo":["מים","לשחות","קיץ","בגד ים","מציל"]},
+            {"word":"קניון","taboo":["חנויות","לקנות","בגדים","כסף","אוכל"]},
+            {"word":"אוניברסיטה","taboo":["ללמוד","תואר","סטודנט","מרצה","מבחן"]},
+            {"word":"מבחן","taboo":["ללמוד","ציון","בית ספר","שאלות","להעתיק"]},
+            {"word":"חתונה","taboo":["כלה","חתן","טבעת","אולם","להתחתן"]},
+            {"word":"מסיבה","taboo":["לרקוד","מוזיקה","חברים","לחגוג","יום הולדת"]},
+            {"word":"יום הולדת","taboo":["חגיגה","עוגה","נרות","מתנה","בלונים"]},
+            {"word":"מתנה","taboo":["להביא","אריזה","יום הולדת","הפתעה","סרט"]},
+            {"word":"עוגה","taboo":["מתוק","לאפות","יום הולדת","שוקולד","תנור"]},
+            {"word":"לחם","taboo":["מאפיה","בצק","לאפות","פיתה","סנדוויץ"]},
+            {"word":"גבינה","taboo":["חלב","צהובה","פרה","פיצה","עכבר"]},
+            {"word":"ביצה","taboo":["תרנגולת","חביתה","קשה","לבן","צהוב"]},
+            {"word":"סלט","taboo":["ירקות","עגבניה","מלפפון","בריא","לחתוך"]},
+            {"word":"המבורגר","taboo":["בשר","לחמניה","צ'יפס","מקדונלדס","לאכול"]},
+            {"word":"פלאפל","taboo":["פיתה","חומוס","כדורים","טחינה","לטגן"]},
+            {"word":"שווארמה","taboo":["בשר","פיתה","לאפה","סיבוב","הודו"]},
+            {"word":"יין","taboo":["ענבים","אדום","לבן","לשתות","כוס"]},
+            {"word":"בירה","taboo":["אלכוהול","פאב","לשתות","צהוב","כוס"]},
+            {"word":"אהבה","taboo":["לב","רגש","זוג","להתנשק","חיבוק"]},
+            {"word":"כעס","taboo":["עצבים","לצעוק","רגש","אדום","להירגע"]},
+            {"word":"שמחה","taboo":["לחייך","לצחוק","רגש","מאושר","כיף"]},
+            {"word":"פחד","taboo":["להיבהל","חושך","סרט אימה","לצעוק","רגש"]},
+            {"word":"חלום","taboo":["לישון","לילה","להתעורר","מיטה","סיוט"]},
+            {"word":"אוטובוס","taboo":["תחנה","לנסוע","נהג","כרטיס","תחבורה ציבורית"]},
+            {"word":"רכב","taboo":["לנהוג","כביש","הגה","גלגלים","דלק"]},
+            {"word":"דלק","taboo":["תחנה","למלא","רכב","בנזין","יקר"]},
+            {"word":"כביש","taboo":["מכוניות","לסוע","אספלט","רמזור","תמרור"]},
+            {"word":"רמזור","taboo":["אדום","ירוק","צהוב","כביש","לעצור"]},
+            {"word":"תמרור","taboo":["שלט","כביש","לעצור","נהיגה","אזהרה"]},
+            {"word":"מספרה","taboo":["שיער","לחתוך","ספר","פן","קצר"]},
+            {"word":"רוח","taboo":["חזק","אויר","חורף","לעוף","לנשוב"]},
+            {"word":"שמיים","taboo":["כחול","עננים","למעלה","שמש","ציפור"]},
+            {"word":"מראה","taboo":["להסתכל","השתקפות","זכוכית","פנים","לשבור"]},
+            {"word":"תיק","taboo":["גב","לשים","בית ספר","רוכסן","לסחוב"]},
+            {"word":"משקפיים","taboo":["עיניים","לראות","שמש","עדשות","מסגרת"]},
+            {"word":"מגבת","taboo":["מים","להתנגב","מקלחת","גוף","ים"]},
+            {"word":"נייר","taboo":["לכתוב","עט","מדפסת","עץ","לקרוע"]},
+            {"word":"עץ","taboo":["עלים","שורשים","ירוק","לטפס","יער"]},
+            {"word":"יער","taboo":["עצים","טבע","טיול","חיות","ירוק"]},
+            {"word":"הר","taboo":["גבוה","לטפס","פסגה","טבע","סלע"]},
+            {"word":"מדבר","taboo":["חול","חם","יבש","גמל","מים"]},
+            {"word":"גמל","taboo":["דבשת","מדבר","לרכוב","חיה","מים"]},
+            {"word":"ארנק","taboo":["כסף","כרטיס אשראי","תיק","לשלם","מטבעות"]},
+            {"word":"מנורה","taboo":["אור","להדליק","חושך","חשמל","תקרה"]},
+            {"word":"שולחן","taboo":["כסא","לאכול","לשבת","עץ","רהיט"]},
+            {"word":"ארון","taboo":["בגדים","לסדר","עץ","דלתות","רהיט"]},
+            {"word":"דלת","taboo":["לפתוח","לסגור","מפתח","ידית","כניסה"]},
+            {"word":"חלון","taboo":["זכוכית","להסתכל","לפתוח","אור","וילון"]}
+        ];
+
+        let roomId = "1234";
+        let myTeam = null; 
+        let localIsPlaying = false;
+        let timerInterval;
+        let lastDisplayedCardIndex = -1; // הזיכרון שמונע הבהובים
+
         const roomRef = ref(db, 'rooms/' + roomId);
 
-        // --- טעינת המילים מהקובץ החיצוני ---
-        let cards = [];
-        
-        fetch('cards.json')
-            .then(response => response.json())
-            .then(data => {
-                cards = data;
-                console.log("נטענו " + cards.length + " כרטיסיות בהצלחה!");
-                document.getElementById('status').textContent = "היכנסו לחדר כדי להתחיל לשחק";
-                checkInitialState();
-            })
-            .catch(error => {
-                console.error("שגיאה בטעינת הקלפים:", error);
-                document.getElementById('status').textContent = "שגיאה בטעינת המילים. ודא שקובץ cards.json קיים.";
-            });
-
-        const uiMainWord = document.getElementById('main-word');
-        const uiTabooWords = document.getElementById('taboo-words');
-        const uiScoreBlue = document.getElementById('score-blue');
+        const uiLobby = document.getElementById('lobby');
         const uiTimer = document.getElementById('timer');
         const uiStatus = document.getElementById('status');
         const uiCardContainer = document.getElementById('card-container');
-        const uiControls = document.getElementById('controls');
         const uiBtnStart = document.getElementById('btn-start');
-        const uiBtnSkip = document.getElementById('btn-skip');
-        const uiBtnCorrect = document.getElementById('btn-correct');
 
-        let timerInterval;
-        let localIsPlaying = false;
+        window.resetGame = async function() {
+            if(confirm("להתחיל משחק חדש ולאפס את הלוח?")) {
+                let fullDeck = Array.from({length: cards.length}, (_, i) => i);
+                fullDeck = fullDeck.sort(() => Math.random() - 0.5);
 
-        function checkInitialState() {
-            get(roomRef).then((snapshot) => {
-                if (!snapshot.exists() && cards.length > 0) {
-                    uiBtnStart.classList.remove('hidden');
-                }
-            });
-        }
+                await set(roomRef, {
+                    scoreBlue: 0,
+                    scoreRed: 0,
+                    deck: fullDeck,
+                    currentCardIndex: fullDeck[0],
+                    isPlaying: false,
+                    activeTeam: null,
+                    timeLeft: 60
+                });
+                lastDisplayedCardIndex = -1; // איפוס הזיכרון
+            }
+        };
 
-        // פונקציית עזר לבחירת קלף אקראי שונה מהנוכחי
-        function getRandomCardIndex(currentIndex) {
-            let newIndex;
-            do {
-                newIndex = Math.floor(Math.random() * cards.length);
-            } while (newIndex === currentIndex && cards.length > 1);
-            return newIndex;
-        }
-
-        // האזנה לשינויים בשרת
-        onValue(roomRef, (snapshot) => {
-            const data = snapshot.val();
+        window.joinTeam = function(team) {
+            myTeam = team;
+            uiLobby.style.display = 'none';
+            document.getElementById('room-display').textContent = `קבוצה: ${team === 'blue' ? 'כחולה' : 'אדומה'}`;
             
-            if (!data) {
-                if (cards.length > 0) {
+            get(roomRef).then(snapshot => {
+                if (!snapshot.exists()) {
+                    let fullDeck = Array.from({length: cards.length}, (_, i) => i);
+                    fullDeck = fullDeck.sort(() => Math.random() - 0.5);
+
                     set(roomRef, {
                         scoreBlue: 0,
-                        currentCardIndex: getRandomCardIndex(-1),
+                        scoreRed: 0,
+                        deck: fullDeck,
+                        currentCardIndex: fullDeck[0],
                         isPlaying: false,
+                        activeTeam: null,
                         timeLeft: 60
                     });
-                    uiBtnStart.classList.remove('hidden');
                 }
-                return;
+            });
+        };
+
+        // צביעת המשבצות
+        function updateBoardColors(scoreBlue, scoreRed) {
+            let bluePos = Math.min(scoreBlue, MAX_STEPS);
+            let redPos = Math.min(scoreRed, MAX_STEPS);
+
+            for(let i=0; i<=MAX_STEPS; i++) {
+                let sq = document.getElementById('sq-' + i);
+                if(sq) sq.style.background = ''; 
             }
 
-            uiScoreBlue.textContent = data.scoreBlue;
-            
-            let seconds = data.timeLeft % 60;
-            let displaySeconds = seconds < 10 ? '0' + seconds : seconds;
-            uiTimer.textContent = `00:${displaySeconds}`;
+            const sqBlue = document.getElementById('sq-' + bluePos);
+            const sqRed = document.getElementById('sq-' + redPos);
 
+            if(bluePos === redPos) {
+                if(sqBlue) sqBlue.style.background = 'linear-gradient(to right, #4facfe 50%, #ff0844 50%)';
+            } else {
+                if(sqBlue) sqBlue.style.background = '#4facfe';
+                if(sqRed) sqRed.style.background = '#ff0844';
+            }
+        }
+
+        onValue(roomRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            updateBoardColors(data.scoreBlue, data.scoreRed);
+
+            let seconds = data.timeLeft % 60;
+            uiTimer.textContent = `00:${seconds < 10 ? '0'+seconds : seconds}`;
             localIsPlaying = data.isPlaying;
 
-            if (data.isPlaying && cards.length > 0) {
+            if (data.isPlaying) {
                 uiBtnStart.classList.add('hidden');
-                uiCardContainer.classList.remove('hidden');
-                uiControls.classList.remove('hidden');
-                uiStatus.textContent = "המשחק בעיצומו!";
-                loadCard(data.currentCardIndex);
+                uiStatus.textContent = `תור הקבוצה ה${data.activeTeam === 'blue' ? 'כחולה' : 'אדומה'}!`;
+                uiStatus.style.color = data.activeTeam === 'blue' ? '#4facfe' : '#ff0844';
+                
+                if (myTeam === data.activeTeam) {
+                    uiCardContainer.classList.remove('hidden');
+                    document.getElementById('controls').classList.remove('hidden');
+                    
+                    // התיקון הקריטי: מעדכן רק אם הקלף באמת התחלף בשרת
+                    if (data.currentCardIndex !== lastDisplayedCardIndex) {
+                        loadCardWithFade(data.currentCardIndex);
+                        lastDisplayedCardIndex = data.currentCardIndex;
+                    }
+
+                } else {
+                    uiCardContainer.classList.add('hidden');
+                    document.getElementById('controls').classList.add('hidden');
+                }
             } else {
                 uiCardContainer.classList.add('hidden');
-                uiControls.classList.add('hidden');
+                document.getElementById('controls').classList.add('hidden');
+                lastDisplayedCardIndex = -1; // מאפס בסוף התור
                 
-                if (cards.length > 0) {
-                    uiBtnStart.classList.remove('hidden');
-                    uiBtnStart.textContent = data.timeLeft <= 0 ? "התור נגמר! (התחל מחדש)" : "התחל תור";
+                if(data.scoreBlue >= MAX_STEPS) {
+                    uiStatus.textContent = "🏆 הקבוצה הכחולה ניצחה! 🏆";
+                    uiStatus.style.color = "#4facfe";
+                    uiBtnStart.classList.add('hidden');
+                } else if(data.scoreRed >= MAX_STEPS) {
+                    uiStatus.textContent = "🏆 הקבוצה האדומה ניצחה! 🏆";
+                    uiStatus.style.color = "#ff0844";
+                    uiBtnStart.classList.add('hidden');
+                } else {
+                    if (myTeam) uiBtnStart.classList.remove('hidden');
+                    uiStatus.textContent = "ממתינים לתחילת התור";
+                    uiStatus.style.color = "#aaa";
                 }
-                uiStatus.textContent = data.timeLeft <= 0 ? "הזמן נגמר!" : "ממתינים לתחילת התור";
                 clearInterval(timerInterval);
             }
         });
 
-        // לחיצה על "התחל תור"
-        uiBtnStart.addEventListener('click', () => {
-            if (cards.length === 0) return; 
+        uiBtnStart.addEventListener('click', async () => {
+            if (!myTeam) return;
+            const snapshot = await get(roomRef);
+            const data = snapshot.val();
             
+            if(data.scoreBlue >= MAX_STEPS || data.scoreRed >= MAX_STEPS) return;
+
             update(roomRef, {
                 isPlaying: true,
-                timeLeft: 60,
-                scoreBlue: 0,
-                currentCardIndex: getRandomCardIndex(-1)
+                activeTeam: myTeam,
+                timeLeft: 60
             });
 
             clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                getDatabaseTimerAndUpdate();
+            timerInterval = setInterval(async () => {
+                const snap = await get(roomRef);
+                const currentData = snap.val();
+                if (currentData && currentData.timeLeft > 0) {
+                    update(roomRef, { timeLeft: currentData.timeLeft - 1 });
+                } else {
+                    update(roomRef, { isPlaying: false });
+                    clearInterval(timerInterval);
+                }
             }, 1000);
         });
 
-        async function getDatabaseTimerAndUpdate() {
+        async function drawNextCard(isCorrect) {
             if (!localIsPlaying) return;
             const snapshot = await get(roomRef);
             const data = snapshot.val();
-            if (data && data.timeLeft > 0) {
-                update(roomRef, { timeLeft: data.timeLeft - 1 });
-            } else {
-                update(roomRef, { isPlaying: false });
-                clearInterval(timerInterval);
+            
+            let deck = data.deck || [];
+            deck.shift(); 
+            
+            if (deck.length === 0) {
+                deck = Array.from({length: cards.length}, (_, i) => i);
+                deck = deck.sort(() => Math.random() - 0.5);
             }
+
+            let updates = {
+                deck: deck,
+                currentCardIndex: deck[0]
+            };
+
+            if (isCorrect) {
+                if (data.activeTeam === 'blue') updates.scoreBlue = data.scoreBlue + 1;
+                if (data.activeTeam === 'red') updates.scoreRed = data.scoreRed + 1;
+            }
+
+            update(roomRef, updates);
         }
 
-        // לחיצה על "הצליחו!"
-        uiBtnCorrect.addEventListener('click', async () => {
-            if (!localIsPlaying) return;
-            const snapshot = await get(roomRef);
-            const data = snapshot.val();
-            
-            update(roomRef, {
-                scoreBlue: data.scoreBlue + 1,
-                currentCardIndex: getRandomCardIndex(data.currentCardIndex)
-            });
-        });
+        document.getElementById('btn-correct').addEventListener('click', () => drawNextCard(true));
+        document.getElementById('btn-skip').addEventListener('click', () => drawNextCard(false));
 
-        // לחיצה על "פס / דילוג"
-        uiBtnSkip.addEventListener('click', async () => {
-            if (!localIsPlaying) return;
-            const snapshot = await get(roomRef);
-            const data = snapshot.val();
-            
-            update(roomRef, {
-                currentCardIndex: getRandomCardIndex(data.currentCardIndex)
-            });
-        });
-
-        // טעינת הקלף למסך
-        function loadCard(index) {
-            if (!cards || cards.length === 0) return;
+        let fadeTimeout;
+        function loadCardWithFade(index) {
             const card = cards[index];
-            uiMainWord.textContent = card.word;
-            
-            uiTabooWords.innerHTML = '';
-            card.taboo.forEach(word => {
-                const li = document.createElement('li');
-                li.textContent = word;
-                uiTabooWords.appendChild(li);
-            });
+            if (!card) return;
+
+            uiCardContainer.classList.add('fade-out');
+
+            clearTimeout(fadeTimeout);
+            fadeTimeout = setTimeout(() => {
+                document.getElementById('main-word').textContent = card.word;
+                const uiTabooWords = document.getElementById('taboo-words');
+                uiTabooWords.innerHTML = '';
+                card.taboo.forEach(word => {
+                    const li = document.createElement('li');
+                    li.textContent = word;
+                    uiTabooWords.appendChild(li);
+                });
+
+                uiCardContainer.classList.remove('fade-out');
+            }, 300);
         }
     </script>
 </body>
