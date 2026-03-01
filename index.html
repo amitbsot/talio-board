@@ -7,8 +7,8 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #fdfbf7;
-            color: #4a4a4a;
+            background-color: #fdfbf7; 
+            color: #4a4a4a; 
             margin: 0;
             padding: 0;
             display: flex;
@@ -18,6 +18,7 @@
             overflow-x: hidden;
         }
 
+        /* --- מסך לובי --- */
         #lobby {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -59,6 +60,7 @@
         .team-btn.red { background-color: #FADBD8; color: #943126; border-color: #F5B7B1; box-shadow: 0 4px 0 #F5B7B1; }
         .team-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
 
+        /* --- הלוח המשותף --- */
         #shared-board {
             background-color: #f4f1ea;
             padding: 15px 10px;
@@ -137,6 +139,7 @@
             font-weight: bold;
         }
 
+        /* --- האזור האישי --- */
         #personal-area {
             padding: 20px 10px 40px 10px;
             flex: 1;
@@ -166,22 +169,6 @@
         .fade-out {
             opacity: 0 !important;
             transform: translateY(15px) !important;
-        }
-
-        /* עיצוב לאזור המדיה (אימוג'י/תמונה) */
-        #card-media {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 80px;
-            margin: 5px 0 15px 0;
-            font-size: 65px;
-        }
-
-        #card-media img {
-            max-width: 80px;
-            max-height: 80px;
-            object-fit: contain;
         }
 
         .main-word {
@@ -224,9 +211,9 @@
         }
 
         button.action-btn:active { transform: scale(0.95); }
-        .btn-correct { background-color: #A9DFBF; box-shadow: 0 4px 0 #7DCEA0;} 
-        .btn-skip { background-color: #F5B7B1; box-shadow: 0 4px 0 #F1948A;} 
-        .btn-start { background-color: #F9E79F; color: #7D6608; width: 90%; max-width: 350px; margin-top: 20px; box-shadow: 0 4px 0 #F4D03F; border:none; padding: 18px; font-size: 20px; font-weight: bold; border-radius: 12px; cursor: pointer;} 
+        .btn-correct { background-color: #A9DFBF; box-shadow: 0 4px 0 #7DCEA0;}
+        .btn-skip { background-color: #F5B7B1; box-shadow: 0 4px 0 #F1948A;}
+        .btn-start { background-color: #F9E79F; color: #7D6608; width: 90%; max-width: 350px; margin-top: 20px; box-shadow: 0 4px 0 #F4D03F; border:none; padding: 18px; font-size: 20px; font-weight: bold; border-radius: 12px; cursor: pointer;}
 
         .hidden { display: none !important; }
 
@@ -244,6 +231,13 @@
             border: 1px solid #d1f2eb;
         }
 
+        /* סגנון למספר השחקנים */
+        .players-count {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+
         @media (max-width: 400px) {
             .square { width: 28px; height: 28px; font-size: 10px; border-radius: 6px; }
             .game-title { font-size: 22px; }
@@ -258,11 +252,9 @@
     <div id="lobby">
         <h1 class="game-title" style="font-size: 42px; margin-bottom: 10px; text-align: center;">TALIO-BOARD</h1>
         <h3 style="margin-bottom: 20px; color: #777;">הכנס שם חדר ובחר קבוצה:</h3>
-        
         <input type="text" id="room-input" class="room-input" placeholder="שם החדר (למשל: משפחת כהן)">
-        
-        <button class="team-btn blue" onclick="joinTeam('blue')">קבוצה תכלת</button>
-        <button class="team-btn red" onclick="joinTeam('red')">קבוצה ורודה</button>
+        <button class="team-btn blue" onclick="joinGame('blue')">קבוצה תכלת</button>
+        <button class="team-btn red" onclick="joinGame('red')">קבוצה ורודה</button>
     </div>
 
     <div id="shared-board">
@@ -272,6 +264,8 @@
             <div style="font-size: 14px; color: #888; font-weight: bold;" id="room-display"></div>
         </div>
         
+        <div id="players-count" class="players-count"></div>
+
         <div class="board-grid" id="board-grid"></div>
 
         <div id="timer">01:00</div>
@@ -284,10 +278,7 @@
         <div id="role-message" class="message-box hidden"></div>
 
         <div id="card-container" class="card hidden">
-            <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;" id="card-role-title"></div>
-            
-            <div id="card-media"></div>
-            
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 10px;" id="card-role-title"></div>
             <div class="main-word" id="main-word">מילה</div>
             <ul class="taboo-list" id="taboo-words"></ul>
         </div>
@@ -313,16 +304,12 @@
         const db = getDatabase(app);
 
         const myPlayerId = Math.random().toString(36).substring(2, 10); 
-        
-        let roomId = "";
-        let roomRef = null;
-        let myTeam = null; 
-        let localIsPlaying = false;
-        let timerInterval;
-        let lastDisplayedCardIndex = -1; 
+        let turnManager = null;
+        let localTimerInterval = null;
+        let lastDisplayedCardIndex = -1;
 
-        const boardGrid = document.getElementById('board-grid');
         const MAX_STEPS = 30;
+        const boardGrid = document.getElementById('board-grid');
         for(let i = 0; i <= MAX_STEPS; i++) {
             let sq = document.createElement('div');
             sq.className = 'square';
@@ -333,200 +320,168 @@
             boardGrid.appendChild(sq);
         }
 
-        // --- מאגר 200 המילים ---
-        // רובן עם icon (אימוג'י), חלקן עם image (למשל במבה, פלאפל) עבור תיקיית תמונות עתידית.
         const cards = [
-            /* חיות */
-            {word:"כלב", icon:"🐶", taboo:["נובח","חיה","חתול","עצם","זנב"]},
-            {word:"חתול", icon:"🐱", taboo:["מיילל","חיה","כלב","עכבר","שפם"]},
-            {word:"עכבר", icon:"🐭", taboo:["גבינה","חתול","קטן","חיה","מחשב"]},
-            {word:"אריה", icon:"🦁", taboo:["מלך","חיות","שאגה","ספארי","צהוב"]},
-            {word:"פיל", icon:"🐘", taboo:["גדול","חדק","אפור","חיה","אפריקה"]},
-            {word:"קוף", icon:"🐵", taboo:["בננה","עץ","חיה","לטפס","גן חיות"]},
-            {word:"נחש", icon:"🐍", taboo:["זוחל","ארס","ארוך","חיה","מכיש"]},
-            {word:"פרפר", icon:"🦋", taboo:["מעופף","כנפיים","צבעוני","אביב","זחל"]},
-            {word:"דג", icon:"🐟", taboo:["מים","ים","לשחות","אקווריום","חכה"]},
-            {word:"סוס", icon:"🐴", taboo:["לרכוב","חיה","חווה","אוכף","דוהר"]},
-            {word:"פרה", icon:"🐮", taboo:["חלב","מו","חיה","עטינים","שחור לבן"]},
-            {word:"תרנגולת", icon:"🐔", taboo:["ביצה","לול","חיה","נוצות","בוקר"]},
-            {word:"ברווז", icon:"🦆", taboo:["מים","אגם","חיה","מקור","צהוב"]},
-            {word:"פינגווין", icon:"🐧", taboo:["שלג","קר","קרח","חיה","שחור לבן"]},
-            {word:"גמל", icon:"🐪", taboo:["דבשת","מדבר","חול","חיה","לרכוב"]},
-            {word:"ארנב", icon:"🐰", taboo:["גזר","אוזניים","לקפוץ","חיה","פרווה"]},
-            {word:"צפרדע", icon:"🐸", taboo:["ירוק","לקפוץ","מים","חיה","קרקור"]},
-            {word:"צב", icon:"🐢", taboo:["איטי","שריון","ירוק","חיה","בית"]},
-            {word:"דוב", icon:"🐻", taboo:["דבש","גדול","חום","יער","חורף"]},
-            {word:"זברה", icon:"🦓", taboo:["פסים","שחור לבן","סוס","חיה","ספארי"]},
-            /* אוכל ושתייה */
-            {word:"תפוח", icon:"🍎", taboo:["אדום","ירוק","פרי","עץ","לאכול"]},
-            {word:"בננה", icon:"🍌", taboo:["צהוב","קוף","פרי","לקלף","לאכול"]},
-            {word:"אבטיח", icon:"🍉", taboo:["אדום","קיץ","גרעינים","מתוק","פרי"]},
-            {word:"תפוז", icon:"🍊", taboo:["כתום","מיץ","חורף","פרי","לקלף"]},
-            {word:"ענבים", icon:"🍇", taboo:["ירוק","אדום","אשכול","יין","פרי"]},
-            {word:"תות", icon:"🍓", taboo:["אדום","מתוק","קצפת","פרי","שדה"]},
-            {word:"עגבניה", icon:"🍅", taboo:["אדום","סלט","ירק","מלפפון","קטשופ"]},
-            {word:"מלפפון", icon:"🥒", taboo:["ירוק","סלט","ירק","חמוץ","ארוך"]},
-            {word:"גזר", icon:"🥕", taboo:["כתום","ארנב","ירק","ארוך","מרק"]},
-            {word:"בצל", icon:"🧅", taboo:["לבכות","ירק","לחתוך","סלט","שום"]},
-            {word:"לחם", icon:"🍞", taboo:["פיתה","לאפות","מאפייה","כריך","בצק"]},
-            {word:"גבינה", icon:"🧀", taboo:["צהובה","לבנה","חלב","פרה","עכבר"]},
-            {word:"ביצה", icon:"🥚", taboo:["תרנגולת","חביתה","קשה","צהוב","לבן"]},
-            {word:"חלב", icon:"🥛", taboo:["לשתות","פרה","לבן","קורנפלקס","קפה"]},
-            {word:"פיצה", icon:"🍕", taboo:["משולש","גבינה","איטליה","משלוח","לאכול"]},
-            {word:"המבורגר", icon:"🍔", taboo:["בשר","לחמניה","צ'יפס","מקדונלדס","לאכול"]},
-            {word:"צ'יפס", icon:"🍟", taboo:["תפוח אדמה","מטוגן","צהוב","קטשופ","המבורגר"]},
-            {word:"שוקולד", icon:"🍫", taboo:["מתוק","קקאו","חום","פרה","טעים"]},
-            {word:"גלידה", icon:"🍦", taboo:["קר","קיץ","מתוק","טעם","כדור"]},
-            {word:"עוגה", icon:"🍰", taboo:["יום הולדת","מתוק","לאפות","שוקולד","נרות"]},
-            {word:"מים", icon:"💧", taboo:["לשתות","ברז","שקוף","צמא","בקבוק"]},
-            {word:"קפה", icon:"☕", taboo:["בוקר","לשתות","חלב","שחור","הפוך"]},
-            {word:"מיץ", icon:"🧃", taboo:["לשתות","תפוזים","תפוחים","מתוק","כוס"]},
-            {word:"מרק", icon:"🥣", taboo:["חם","חורף","לאכול","קערה","כף"]},
-            {word:"פסטה", icon:"🍝", taboo:["ספגטי","רוטב","עגבניות","איטליה","אטריות"]},
-            /* חפצים ובית */
-            {word:"מיטה", icon:"🛏️", taboo:["לישון","שמיכה","כרית","מזרן","לילה"]},
-            {word:"שולחן", icon:"테블", image:"table.png", taboo:["כסא","לאכול","רהיט","לשבת","עץ"]}, // דוגמה לפלייסהולדר אם רוצים, אבל יש גם אימוג'י 
-            {word:"כסא", icon:"🪑", taboo:["לשבת","שולחן","רהיט","רגליים","נוח"]},
-            {word:"ספה", icon:"🛋️", taboo:["סלון","לשבת","טלוויזיה","נוח","רהיט"]},
-            {word:"ארון", icon:"🚪", taboo:["בגדים","עץ","דלתות","לסדר","חדר"]},
-            {word:"דלת", icon:"🚪", taboo:["לפתוח","לסגור","מפתח","ידית","כניסה"]},
-            {word:"חלון", icon:"🪟", taboo:["להסתכל","זכוכית","לפתוח","אור","וילון"]},
-            {word:"מנורה", icon:"💡", taboo:["אור","חשמל","להדליק","חושך","תקרה"]},
-            {word:"טלוויזיה", icon:"📺", taboo:["לראות","מסך","סרט","סלון","שלט"]},
-            {word:"מחשב", icon:"💻", taboo:["מסך","מקלדת","עכבר","אינטרנט","משחק"]},
-            {word:"פלאפון", icon:"📱", taboo:["מסך","להתקשר","סוללה","מטען","אייפון"]},
-            {word:"מקרר", icon:"🧊", taboo:["מטבח","אוכל","קר","להקפיא","מים"]},
-            {word:"תנור", icon:"♨️", taboo:["לאפות","חם","מטבח","עוגה","פיצה"]},
-            {word:"מיקרוגל", icon:"⏲️", taboo:["לחמם","מטבח","אוכל","מהיר","חשמל"]},
-            {word:"מראה", icon:"🪞", taboo:["להסתכל","זכוכית","פנים","השתקפות","להסתרק"]},
-            {word:"מקלחת", icon:"🚿", taboo:["מים","סבון","לשטוף","נקי","להתרחץ"]},
-            {word:"שירותים", icon:"🚽", taboo:["אסלה","נייר טואלט","פיפי","מים","חדר"]},
-            {word:"מגבת", icon:"🧻", taboo:["להתנגב","מים","מקלחת","ים","גוף"]},
-            {word:"סבון", icon:"🧼", taboo:["ידיים","לשטוף","מים","נקי","קצף"]},
-            {word:"מברשת שיניים", icon:"🪥", taboo:["לצחצח","פה","משחה","בוקר","רופא"]},
-            {word:"שעון", icon:"⌚", taboo:["זמן","מחוגים","יד","שעה","קיר"]},
-            {word:"משקפיים", icon:"👓", taboo:["לראות","עיניים","שמש","עדשות","מסגרת"]},
-            {word:"ארנק", icon:"👛", taboo:["כסף","כרטיס","תיק","לשלם","מטבע"]},
-            {word:"תיק", icon:"🎒", taboo:["בית ספר","לשאת","גב","ספרים","רוכסן"]},
-            {word:"מטריה", icon:"☂️", taboo:["גשם","חורף","מים","להירטב","לפתוח"]},
-            {word:"מפתח", icon:"🔑", taboo:["דלת","לפתוח","בית","אוטו","מנעול"]},
-            {word:"ספר", icon:"📖", taboo:["לקרוא","דפים","סיפור","ספריה","מילים"]},
-            {word:"עיפרון", icon:"✏️", taboo:["לכתוב","מחק","קלמר","חוד","צייר"]},
-            {word:"מספריים", icon:"✂️", taboo:["לגזור","נייר","חותך","חד","קלמר"]},
-            {word:"כדור", icon:"⚽", taboo:["לשחק","עגול","לבעוט","למסור","ספורט"]},
-            /* כלי רכב ודרכים */
-            {word:"רכב", icon:"🚗", taboo:["לנהוג","כביש","הגה","גלגלים","אוטו"]},
-            {word:"אוטובוס", icon:"🚌", taboo:["תחנה","לנסוע","נהג","גדול","כרטיס"]},
-            {word:"רכבת", icon:"🚂", taboo:["פסים","קרון","תחנה","לנסוע","מהיר"]},
-            {word:"מטוס", icon:"✈️", taboo:["לטוס","שמיים","שדה תעופה","כנפיים","חו''ל"]},
-            {word:"מסוק", icon:"🚁", taboo:["לטוס","אוויר","פרופלור","צבא","שמיים"]},
-            {word:"אונייה", icon:"🚢", taboo:["ים","לשוט","מים","גדול","סירה"]},
-            {word:"סירה", icon:"⛵", taboo:["מים","לים","לשוט","קטן","משוטים"]},
-            {word:"אופניים", icon:"🚲", taboo:["לרכוב","גלגלים","פדלים","קסדה","כביש"]},
-            {word:"אופנוע", icon:"🏍️", taboo:["גלגלים","לרכוב","מהיר","קסדה","כביש"]},
-            {word:"קורקינט", icon:"🛴", taboo:["חשמלי","לרכוב","גלגלים","לעמוד","כביש"]},
-            {word:"טרקטור", icon:"🚜", taboo:["חקלאות","שדה","גדול","גלגלים","אדמה"]},
-            {word:"אמבולנס", icon:"🚑", taboo:["בית חולים","חולה","רופא","סירנה","מהיר"]},
-            {word:"משטרה", icon:"🚓", taboo:["שוטר","ניידת","כחול","סירנה","לעצור"]},
-            {word:"כבאית", icon:"🚒", taboo:["אש","מים","אדום","סולם","לכבות"]},
-            {word:"כביש", icon:"🛣️", taboo:["מכוניות","לנסוע","אספלט","רמזור","שחור"]},
-            {word:"רמזור", icon:"🚥", taboo:["אדום","ירוק","צהוב","כביש","לעצור"]},
-            {word:"דלק", icon:"⛽", taboo:["תחנה","למלא","רכב","בנזין","יקר"]},
-            /* טבע ומזג אוויר */
-            {word:"שמש", icon:"☀️", taboo:["אור","חם","יום","צהוב","שמיים"]},
-            {word:"ירח", icon:"🌙", taboo:["לילה","כוכבים","שמיים","לבן","מאיר"]},
-            {word:"כוכב", icon:"⭐", taboo:["שמיים","לילה","זוהר","נופל","צהוב"]},
-            {word:"ענן", icon:"☁️", taboo:["שמיים","לבן","גשם","אפור","מעופף"]},
-            {word:"גשם", icon:"🌧️", taboo:["מים","חורף","מטריה","ענן","רטוב"]},
-            {word:"שלג", icon:"❄️", taboo:["לבן","קר","חורף","בובה","קרח"]},
-            {word:"רוח", icon:"🌬️", taboo:["חזק","אוויר","מעיף","חורף","קר"]},
-            {word:"עץ", icon:"🌳", taboo:["עלים","ענפים","ירוק","לטפס","יער"]},
-            {word:"פרח", icon:"🌻", taboo:["צמח","ריח","עלי כותרת","אדמה","גינה"]},
-            {word:"דשא", icon:"🌱", taboo:["ירוק","גינה","אדמה","לשבת","פארק"]},
-            {word:"הר", icon:"⛰️", taboo:["גבוה","לטפס","פסגה","סלע","טבע"]},
-            {word:"ים", icon:"🌊", taboo:["מים","חול","גלים","קיץ","לשחות"]},
-            {word:"חול", icon:"🏜️", taboo:["ים","מדבר","ארמון","צהוב","רגליים"]},
-            {word:"אש", icon:"🔥", taboo:["חם","לשרוף","מדורה","אדום","מים"]},
-            /* לבוש */
-            {word:"חולצה", icon:"👕", taboo:["ללבוש","בגד","שרוולים","ארון","מכנסיים"]},
-            {word:"מכנסיים", icon:"👖", taboo:["ללבוש","רגליים","ג'ינס","חולצה","בגד"]},
-            {word:"שמלה", icon:"👗", taboo:["ללבוש","בנות","בגד","אירוע","חצאית"]},
-            {word:"חצאית", icon:"🥻", taboo:["בנות","ללבוש","בגד","שמלה","קצר"]},
-            {word:"נעליים", icon:"👟", taboo:["רגליים","לנעול","ללכת","שרוכים","ספורט"]},
-            {word:"גרביים", icon:"🧦", taboo:["רגליים","נעליים","חורף","לגרוב","זוג"]},
-            {word:"כובע", icon:"🧢", taboo:["ראש","שמש","לחבוש","קר","קיץ"]},
-            {word:"מעיל", icon:"🧥", taboo:["חורף","קר","בגד","גשם","ללבוש"]},
-            {word:"צעיף", icon:"🧣", taboo:["צוואר","חורף","חימום","צמר","בגד"]},
-            {word:"פיג'מה", icon:"🛌", taboo:["לישון","בגד","לילה","מיטה","נוח"]},
-            {word:"בגד ים", icon:"🩱", taboo:["בריכה","קיץ","לשחות","מים","בגד"]},
-            /* חלקי גוף */
-            {word:"ראש", icon:"🗣️", taboo:["גוף","שיער","פנים","כובע","צוואר"]},
-            {word:"עיניים", icon:"👀", taboo:["לראות","פנים","משקפיים","לעצום","להסתכל"]},
-            {word:"אוזניים", icon:"👂", taboo:["לשמוע","ראש","עגילים","רעש","צליל"]},
-            {word:"אף", icon:"👃", taboo:["להריח","פנים","לנשום","אפצ'י","ריח"]},
-            {word:"פה", icon:"👄", taboo:["לדבר","לאכול","שיניים","שפתיים","לשון"]},
-            {word:"שן", icon:"🦷", taboo:["פה","לאכול","לצחצח","רופא","לבן"]},
-            {word:"שיער", icon:"💇", taboo:["ראש","להסתרק","מספרה","ארוך","קצר"]},
-            {word:"יד", icon:"🖐️", taboo:["אצבעות","לתפוס","לגעת","זרוע","כפפות"]},
-            {word:"רגל", icon:"🦵", taboo:["ללכת","לרוץ","נעליים","ברך","כדורגל"]},
-            {word:"בטן", icon:"🤰", taboo:["גוף","אוכל","רעב","פופיק","כואב"]},
-            {word:"גב", icon:"🧍", taboo:["מאחורה","עמוד שדרה","גוף","תיק","כואב"]},
-            {word:"לב", icon:"❤️", taboo:["פועם","אהבה","דם","גוף","חזה"]},
-            /* מקצועות */
-            {word:"רופא", icon:"👨‍⚕️", taboo:["חולה","בית חולים","תרופה","מרפאה","סטטוסקופ"]},
-            {word:"אחות", icon:"👩‍⚕️", taboo:["בית חולים","רופא","חולה","זריקה","רפואה"]},
-            {word:"מורה", icon:"👩‍🏫", taboo:["בית ספר","תלמידים","כיתה","לוח","ללמד"]},
-            {word:"שוטר", icon:"👮", taboo:["משטרה","ניידת","לעצור","פשע","כחול"]},
-            {word:"כבאי", icon:"🧑‍🚒", taboo:["אש","כבאית","מים","לכבות","הצלה"]},
-            {word:"טייס", icon:"🧑‍✈️", taboo:["מטוס","לטוס","שמיים","חו''ל","שדה תעופה"]},
-            {word:"נהג", icon:"🚗", taboo:["אוטובוס","מונית","לנסוע","הגה","כביש"]},
-            {word:"טבח", icon:"🧑‍🍳", taboo:["לבשל","מסעדה","אוכל","מטבח","סיר"]},
-            {word:"זמר", icon:"🎤", taboo:["לשיר","שיר","מיקרופון","מוזיקה","במה"]},
-            {word:"שחקן", icon:"🎭", taboo:["סרט","הצגה","קולנוע","טלוויזיה","תיאטרון"]},
-            {word:"רקדן", icon:"💃", taboo:["לרקוד","מוזיקה","תנועות","במה","קצב"]},
-            {word:"צייר", icon:"🎨", taboo:["ציור","צבעים","מכחול","אומנות","קיר"]},
-            {word:"חייל", icon:"🪖", taboo:["צבא","נשק","מדים","מלחמה","בסיס"]},
-            {word:"ליצן", icon:"🤡", taboo:["מצחיק","יום הולדת","אדום","קרקס","איפור"]},
-            {word:"קוסם", icon:"🪄", taboo:["קסם","כובע","שפן","שרביט","הוקוס פוקוס"]},
-            {word:"מלך", icon:"👑", taboo:["כתר","ארמון","מלכה","נסיך","שולט"]},
-            /* מקומות */
-            {word:"בית", icon:"🏠", taboo:["לגור","דירה","חדר","משפחה","דלת"]},
-            {word:"בית ספר", icon:"🏫", taboo:["תלמידים","מורה","ללמוד","כיתה","הפסקה"]},
-            {word:"גן ילדים", icon:"🧸", taboo:["לשחק","גננת","ילדים","צעצועים","ארגז חול"]},
-            {word:"בית חולים", icon:"🏥", taboo:["רופא","חולה","תרופה","אחות","אמבולנס"]},
-            {word:"סופרמרקט", icon:"🛒", taboo:["לקנות","אוכל","עגלה","קופה","חנות"]},
-            {word:"קניון", icon:"🛍️", taboo:["חנויות","לקנות","בגדים","כסף","אוכל"]},
-            {word:"פארק", icon:"🏞️", taboo:["דשא","לשחק","עצים","גינה","מתקנים"]},
-            {word:"בריכה", icon:"🏊", taboo:["מים","לשחות","בגד ים","קיץ","מציל"]},
-            {word:"יער", icon:"🌲", taboo:["עצים","טבע","חיות","טיול","פיקניק"]},
-            {word:"גן חיות", icon:"🦒", taboo:["חיות","קוף","אריה","לראות","כלוב"]},
-            {word:"קולנוע", icon:"🍿", taboo:["סרט","פופקורן","מסך","לראות","כרטיס"]},
-            {word:"מסעדה", icon:"🍽️", taboo:["לאכול","תפריט","מלצר","להזמין","אוכל"]},
-            {word:"ספריה", icon:"📚", taboo:["ספרים","לקרוא","שקט","להשאיל","מדפים"]},
-            {word:"בנק", icon:"🏦", taboo:["כסף","לשלם","חשבון","פקיד","הלוואה"]},
-            {word:"מלון", icon:"🏨", taboo:["חופשה","לישון","חדר","חו''ל","נופש"]},
-            /* מילים כלליות - ישראלי / משפחתי (עם image להדגמת תמונה עתידית) */
-            {word:"במבה", image:"bamba.png", taboo:["בוטנים","חטיף","צהוב","תינוק","אוסם"]},
-            {word:"קרמבו", image:"krembo.png", taboo:["חורף","קצפת","שוקולד","ביסקוויט","מתוק"]},
-            {word:"פלאפל", image:"falafel.png", taboo:["פיתה","חומוס","כדורים","לטגן","ישראל"]},
-            {word:"שקדי מרק", image:"shkedei.png", taboo:["צהוב","מרק","קטן","לאכול","אוסם"]},
-            {word:"ביסלי", image:"bisli.png", taboo:["חטיף","גריל","קראנצ'י","אוסם","במבה"]},
-            {word:"מטקות", image:"matkot.png", taboo:["ים","כדור","רעש","לשחק","קיץ"]},
-            {word:"שוקו", icon:"🧋", taboo:["לשתות","חלב","קקאו","מתוק","שקית"]},
-            {word:"חתונה", icon:"👰", taboo:["כלה","חתן","להתחתן","טבעת","אולם"]},
-            {word:"יום הולדת", icon:"🥳", taboo:["לחגוג","עוגה","מתנה","בלונים","מסיבה"]},
-            {word:"מתנה", icon:"🎁", taboo:["להביא","אריזה","יום הולדת","הפתעה","סרט"]},
-            {word:"בלון", icon:"🎈", taboo:["לנפח","יום הולדת","אוויר","לעוף","צבעוני"]},
-            {word:"מוזיקה", icon:"🎵", taboo:["לשמוע","שיר","לנגן","רדיו","צליל"]},
-            {word:"גיטרה", icon:"🎸", taboo:["לנגן","מיתרים","כלי","מוזיקה","פריטה"]},
-            {word:"אהבה", icon:"❤️", taboo:["לב","רגש","חיבוק","נשיקה","זוג"]},
-            {word:"שמחה", icon:"😊", taboo:["לחייך","לצחוק","מאושר","כיף","רגש"]},
-            {word:"חלום", icon:"💭", taboo:["לישון","לילה","מיטה","סיוט","לדמיין"]},
-            {word:"כסף", icon:"💵", taboo:["שטר","מטבע","לקנות","ארנק","לשלם"]},
-            {word:"צבע", icon:"🖍️", taboo:["לצייר","טוש","אדום","כחול","דף"]},
-            {word:"משחק", icon:"🎲", taboo:["לשחק","קופסא","לנצח","כיף","חברים"]}
+            {"word":"כלב","taboo":["חיה","נבחן","חתול","עצם","רצועה"]},
+            {"word":"שמש","taboo":["יום","אור","חם","שמיים","צהוב"]},
+            {"word":"אופניים","taboo":["גלגלים","לרכוב","פדלים","קסדה","כביש"]},
+            {"word":"פיצה","taboo":["איטליה","גבינה","אוכל","משלוח","משולש"]},
+            {"word":"ים","taboo":["מים","חול","גלים","קיץ","מטקות"]},
+            {"word":"מחשב","taboo":["מקלדת","עכבר","מסך","אינטרנט","לעבוד"]},
+            {"word":"טיסה","taboo":["מטוס","שדה תעופה","חו''ל","כרטיס","כנפיים"]},
+            {"word":"ירושלים","taboo":["עיר","בירה","כותל","קודש","זהב"]},
+            {"word":"כדורגל","taboo":["מגרש","שער","מסי","ספורט","לבעוט"]},
+            {"word":"פלאפון","taboo":["מסך","להתקשר","סוללה","אפל","מטען"]},
+            {"word":"קפה","taboo":["בוקר","לשתות","חלב","ספל","הפוך"]},
+            {"word":"מיטה","taboo":["לישון","שמיכה","כרית","לילה","מזרן"]},
+            {"word":"רכבת","taboo":["פסים","תחנה","קרון","כרטיס","לנסוע"]},
+            {"word":"מורה","taboo":["בית ספר","תלמידים","כיתה","לוח","ללמד"]},
+            {"word":"סרט","taboo":["קולנוע","פופקורן","לראות","שחקן","טלוויזיה"]},
+            {"word":"חורף","taboo":["קר","גשם","מטריה","עונה","מעיל"]},
+            {"word":"גיטרה","taboo":["לנגן","מיתרים","כלי","מוזיקה","חשמלית"]},
+            {"word":"רופא","taboo":["חולה","בית חולים","תרופה","מרפאה","בריאות"]},
+            {"word":"שוקולד","taboo":["מתוק","קקאו","חום","פרה","טעים"]},
+            {"word":"שעון","taboo":["זמן","מחוגים","יד","שעה","לענוד"]}
         ];
 
+        // --- שילוב מחלקת GameTurnManager (המקור המהימן לניהול תורות) ---
+        class GameTurnManager {
+            constructor(roomRef, playerId, myTeamId) {
+                this.roomRef = roomRef;
+                this.playerId = playerId;
+                this.myTeamId = myTeamId;
+                this.currentState = null;
+
+                this.events = {
+                    onTurnStart: (team) => {},
+                    onTurnEnd: (team) => {},
+                    onTeamChange: (prevTeam, newTeam) => {},
+                    onStateUpdate: (state) => {}
+                };
+            }
+
+            async initializeGame() {
+                let fullDeck = Array.from({length: cards.length}, (_, i) => i);
+                fullDeck = fullDeck.sort(() => Math.random() - 0.5);
+
+                const initialState = {
+                    teams: [
+                        { id: 'blue', name: 'תכלת', players: {}, score: 0 },
+                        { id: 'red', name: 'ורוד', players: {}, score: 0 }
+                    ],
+                    currentTeamIndex: 0,
+                    turnStatus: 'transitioning', // active / ended / transitioning
+                    turnStartTime: null,
+                    turnDuration: 60,
+                    deck: fullDeck,
+                    currentCardIndex: fullDeck[0],
+                    describerId: null
+                };
+                await set(this.roomRef, initialState);
+            }
+
+            async joinTeam() {
+                const snapshot = await get(this.roomRef);
+                if (!snapshot.exists()) {
+                    await this.initializeGame();
+                }
+                
+                const state = (await get(this.roomRef)).val();
+                const teamIndex = state.teams.findIndex(t => t.id === this.myTeamId);
+                
+                if (teamIndex !== -1) {
+                    await update(ref(db, `rooms/${this.roomRef.key}/teams/${teamIndex}/players`), {
+                        [this.playerId]: true
+                    });
+                }
+            }
+
+            listenToState() {
+                onValue(this.roomRef, (snapshot) => {
+                    const newState = snapshot.val();
+                    if (!newState) return;
+
+                    const prevState = this.currentState;
+                    this.currentState = newState;
+
+                    newState.teams.forEach(team => {
+                        team.playerCount = team.players ? Object.keys(team.players).length : 0;
+                    });
+
+                    if (prevState) {
+                        const prevTeam = prevState.teams[prevState.currentTeamIndex];
+                        const currentTeam = newState.teams[newState.currentTeamIndex];
+
+                        if (prevState.turnStatus === 'active' && newState.turnStatus === 'ended') {
+                            this.events.onTurnEnd(prevTeam);
+                        }
+                        if (prevState.currentTeamIndex !== newState.currentTeamIndex) {
+                            this.events.onTeamChange(prevTeam, currentTeam);
+                        }
+                        if (prevState.turnStatus !== 'active' && newState.turnStatus === 'active') {
+                            this.events.onTurnStart(currentTeam);
+                        }
+                    }
+                    this.events.onStateUpdate(this.currentState);
+                });
+            }
+
+            async startTurn() {
+                if (!this.currentState) return;
+                await update(this.roomRef, {
+                    turnStatus: 'active',
+                    turnStartTime: Date.now(),
+                    describerId: this.playerId
+                });
+            }
+
+            async endTurn() {
+                const state = this.currentState;
+                if (!state || state.turnStatus !== 'active') return;
+
+                // קודם מעדכנים סטטוס לסיום כדי שה-UI יראה את זה מיד
+                await update(this.roomRef, { turnStatus: 'ended' });
+
+                const nextTeamIndex = (state.currentTeamIndex + 1) % state.teams.length;
+                
+                setTimeout(async () => {
+                    await update(this.roomRef, {
+                        currentTeamIndex: nextTeamIndex,
+                        turnStatus: 'transitioning',
+                        turnStartTime: null,
+                        describerId: null
+                    });
+                }, 3000); 
+            }
+
+            async drawCard(isCorrect) {
+                const state = this.currentState;
+                const activeTeam = state.teams[state.currentTeamIndex];
+
+                // מניעת פעולות ממשתמש שאינו המתאר הנוכחי
+                if (state.turnStatus !== 'active' || state.describerId !== this.playerId) return;
+
+                let deck = state.deck || [];
+                deck.shift(); 
+                
+                if (deck.length === 0) {
+                    deck = Array.from({length: cards.length}, (_, i) => i);
+                    deck = deck.sort(() => Math.random() - 0.5);
+                }
+
+                let updates = {
+                    deck: deck,
+                    currentCardIndex: deck[0]
+                };
+
+                if (isCorrect) {
+                    updates[`teams/${state.currentTeamIndex}/score`] = activeTeam.score + 1;
+                }
+
+                await update(this.roomRef, updates);
+            }
+        }
+
+        // --- חיבור ה-UI ---
         const uiLobby = document.getElementById('lobby');
         const uiTimer = document.getElementById('timer');
         const uiStatus = document.getElementById('status');
@@ -534,58 +489,28 @@
         const uiBtnStart = document.getElementById('btn-start');
         const uiRoleMessage = document.getElementById('role-message');
         const uiCardRoleTitle = document.getElementById('card-role-title');
+        const uiPlayersCount = document.getElementById('players-count');
 
-        window.joinTeam = function(team) {
-            const inputVal = document.getElementById('room-input').value.trim();
-            if(!inputVal) {
-                alert("אנא הכנס שם חדר!");
-                return;
-            }
-            
-            roomId = inputVal;
-            myTeam = team;
-            roomRef = ref(db, 'rooms/' + roomId);
+        window.joinGame = async function(teamId) {
+            const roomId = document.getElementById('room-input').value.trim();
+            if(!roomId) { alert("אנא הכנס שם חדר!"); return; }
 
             uiLobby.style.display = 'none';
-            document.getElementById('room-display').textContent = `חדר: ${roomId} | ${team === 'blue' ? 'תכלת' : 'ורוד'}`;
+            document.getElementById('room-display').textContent = `חדר: ${roomId} | ${teamId === 'blue' ? 'תכלת' : 'ורוד'}`;
             
-            get(roomRef).then(snapshot => {
-                if (!snapshot.exists()) {
-                    let fullDeck = Array.from({length: cards.length}, (_, i) => i);
-                    fullDeck = fullDeck.sort(() => Math.random() - 0.5);
-
-                    set(roomRef, {
-                        scoreBlue: 0,
-                        scoreRed: 0,
-                        deck: fullDeck,
-                        currentCardIndex: fullDeck[0],
-                        isPlaying: false,
-                        activeTeam: null,
-                        describerId: null,
-                        timeLeft: 60
-                    });
-                }
-                listenToRoom(); 
-            });
+            const roomRef = ref(db, 'rooms/' + roomId);
+            turnManager = new GameTurnManager(roomRef, myPlayerId, teamId);
+            
+            await turnManager.joinTeam();
+            setupTurnManagerEvents();
+            turnManager.listenToState();
         };
 
         window.resetGame = async function() {
-            if(!roomRef) return;
+            if(!turnManager) return;
             if(confirm("להתחיל משחק חדש ולאפס את הלוח?")) {
-                let fullDeck = Array.from({length: cards.length}, (_, i) => i);
-                fullDeck = fullDeck.sort(() => Math.random() - 0.5);
-
-                await set(roomRef, {
-                    scoreBlue: 0,
-                    scoreRed: 0,
-                    deck: fullDeck,
-                    currentCardIndex: fullDeck[0],
-                    isPlaying: false,
-                    activeTeam: null,
-                    describerId: null,
-                    timeLeft: 60
-                });
-                lastDisplayedCardIndex = -1; 
+                await turnManager.initializeGame();
+                lastDisplayedCardIndex = -1;
             }
         };
 
@@ -609,158 +534,150 @@
             }
         }
 
-        function listenToRoom() {
-            onValue(roomRef, (snapshot) => {
-                const data = snapshot.val();
-                if (!data) return;
+        function setupTurnManagerEvents() {
+            turnManager.events.onStateUpdate = (state) => {
+                const scoreBlue = state.teams[0].score;
+                const scoreRed = state.teams[1].score;
+                updateBoardColors(scoreBlue, scoreRed);
 
-                updateBoardColors(data.scoreBlue, data.scoreRed);
+                // הצגת כמות שחקנים דינמית (סעיף 2)
+                uiPlayersCount.textContent = `שחקנים מחוברים - תכלת: ${state.teams[0].playerCount} | ורוד: ${state.teams[1].playerCount}`;
 
-                let seconds = data.timeLeft % 60;
-                uiTimer.textContent = `00:${seconds < 10 ? '0'+seconds : seconds}`;
-                localIsPlaying = data.isPlaying;
+                const currentTeam = state.teams[state.currentTeamIndex];
 
-                if (data.isPlaying) {
+                // ניהול טיימר מקומי חכם (מונע כתיבה רציפה לשרת)
+                if (state.turnStatus === 'active') {
+                    if (!localTimerInterval) {
+                        localTimerInterval = setInterval(() => {
+                            if (!turnManager.currentState || turnManager.currentState.turnStatus !== 'active') {
+                                clearInterval(localTimerInterval);
+                                localTimerInterval = null;
+                                return;
+                            }
+                            
+                            let elapsed = Math.floor((Date.now() - turnManager.currentState.turnStartTime) / 1000);
+                            let timeLeft = turnManager.currentState.turnDuration - elapsed;
+                            
+                            if (timeLeft <= 0) {
+                                timeLeft = 0;
+                                // רק המתאר מסיים את התור כדי למנוע כפילויות שרת
+                                if (turnManager.currentState.describerId === myPlayerId) {
+                                    turnManager.endTurn();
+                                }
+                            }
+                            
+                            uiTimer.textContent = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
+                        }, 250); // מתעדכן ברבעי שנייה כדי להיות מדויק, אבל לא כותב לשרת כלל!
+                    }
+                } else {
+                    if (localTimerInterval) {
+                        clearInterval(localTimerInterval);
+                        localTimerInterval = null;
+                    }
+                    uiTimer.textContent = `00:${state.turnDuration}`;
+                }
+
+                // ניהול הצגת הקלפים לפי תפקידים
+                if (state.turnStatus === 'active') {
                     uiBtnStart.classList.add('hidden');
-                    uiStatus.textContent = `תור הקבוצה ה${data.activeTeam === 'blue' ? 'תכלת' : 'ורודה'}!`;
-                    uiStatus.style.color = data.activeTeam === 'blue' ? '#2874A6' : '#943126';
-                    
-                    if (myTeam !== data.activeTeam) {
+                    uiStatus.textContent = `תור קבוצת ${currentTeam.name}!`;
+                    uiStatus.style.color = currentTeam.id === 'blue' ? '#2874A6' : '#943126';
+
+                    if (turnManager.myTeamId !== currentTeam.id) {
+                        // קבוצה יריבה (מפקחים)
                         uiRoleMessage.classList.add('hidden');
                         uiCardContainer.classList.remove('hidden');
                         document.getElementById('controls').classList.add('hidden');
                         uiCardRoleTitle.textContent = "👁️ מצב פיקוח: ודאו שהם לא אומרים את המילים!";
-                        
-                        if (data.currentCardIndex !== lastDisplayedCardIndex) {
-                            loadCardWithFade(data.currentCardIndex);
-                            lastDisplayedCardIndex = data.currentCardIndex;
-                        }
-
+                        loadCardIfNeeded(state.currentCardIndex);
                     } else {
-                        if (myPlayerId === data.describerId) {
+                        if (state.describerId === myPlayerId) {
+                            // המתאר
                             uiRoleMessage.classList.add('hidden');
                             uiCardContainer.classList.remove('hidden');
                             document.getElementById('controls').classList.remove('hidden');
                             uiCardRoleTitle.textContent = "🗣️ אתה המתאר! תן רמזים לקבוצה שלך";
-
-                            if (data.currentCardIndex !== lastDisplayedCardIndex) {
-                                loadCardWithFade(data.currentCardIndex);
-                                lastDisplayedCardIndex = data.currentCardIndex;
-                            }
+                            loadCardIfNeeded(state.currentCardIndex);
                         } else {
+                            // מנחשים מאותה קבוצה
                             uiCardContainer.classList.add('hidden');
                             document.getElementById('controls').classList.add('hidden');
                             uiRoleMessage.classList.remove('hidden');
                             uiRoleMessage.textContent = "🧠 התור שלכם! חבר קבוצה מתאר את המילה, נחשו מהי!";
-                            uiRoleMessage.style.backgroundColor = "#e8f8f5";
-                            uiRoleMessage.style.color = "#117a65";
                         }
                     }
-
                 } else {
+                    // מצבי מעבר או סיום משחק
                     uiCardContainer.classList.add('hidden');
                     document.getElementById('controls').classList.add('hidden');
                     uiRoleMessage.classList.add('hidden');
-                    lastDisplayedCardIndex = -1; 
-                    
-                    if(data.scoreBlue >= MAX_STEPS) {
+                    lastDisplayedCardIndex = -1;
+
+                    if(scoreBlue >= MAX_STEPS) {
                         uiStatus.textContent = "🏆 קבוצת התכלת ניצחה! 🏆";
                         uiStatus.style.color = "#2874A6";
                         uiBtnStart.classList.add('hidden');
-                    } else if(data.scoreRed >= MAX_STEPS) {
+                    } else if(scoreRed >= MAX_STEPS) {
                         uiStatus.textContent = "🏆 הקבוצה הורודה ניצחה! 🏆";
                         uiStatus.style.color = "#943126";
                         uiBtnStart.classList.add('hidden');
                     } else {
-                        if (myTeam) uiBtnStart.classList.remove('hidden');
-                        uiStatus.textContent = "ממתינים לתחילת התור";
-                        uiStatus.style.color = "#888";
+                        if (state.turnStatus === 'ended') {
+                            uiStatus.textContent = "הזמן נגמר! מסכמים את התור...";
+                            uiStatus.style.color = "#e74c3c";
+                            uiBtnStart.classList.add('hidden');
+                        } else {
+                            // מצב transitioning (המתנה להתחלת תור)
+                            if (turnManager.myTeamId === currentTeam.id) {
+                                uiBtnStart.classList.remove('hidden');
+                            } else {
+                                uiBtnStart.classList.add('hidden');
+                            }
+                            uiStatus.textContent = `תור קבוצת ${currentTeam.name} - ממתינים שיתחילו`;
+                            uiStatus.style.color = "#888";
+                        }
                     }
-                    clearInterval(timerInterval);
                 }
-            });
-        }
-
-        uiBtnStart.addEventListener('click', async () => {
-            if (!myTeam || !roomRef) return;
-            const snapshot = await get(roomRef);
-            const data = snapshot.val();
-            
-            if(data.scoreBlue >= MAX_STEPS || data.scoreRed >= MAX_STEPS) return;
-
-            update(roomRef, {
-                isPlaying: true,
-                activeTeam: myTeam,
-                describerId: myPlayerId, 
-                timeLeft: 60
-            });
-
-            clearInterval(timerInterval);
-            timerInterval = setInterval(async () => {
-                const snap = await get(roomRef);
-                const currentData = snap.val();
-                if (currentData && currentData.timeLeft > 0) {
-                    update(roomRef, { timeLeft: currentData.timeLeft - 1 });
-                } else {
-                    update(roomRef, { isPlaying: false });
-                    clearInterval(timerInterval);
-                }
-            }, 1000);
-        });
-
-        async function drawNextCard(isCorrect) {
-            if (!localIsPlaying || !roomRef) return;
-            const snapshot = await get(roomRef);
-            const data = snapshot.val();
-            
-            if (data.describerId !== myPlayerId) return;
-
-            let deck = data.deck || [];
-            deck.shift(); 
-            
-            if (deck.length === 0) {
-                deck = Array.from({length: cards.length}, (_, i) => i);
-                deck = deck.sort(() => Math.random() - 0.5);
-            }
-
-            let updates = {
-                deck: deck,
-                currentCardIndex: deck[0]
             };
 
-            if (isCorrect) {
-                if (data.activeTeam === 'blue') updates.scoreBlue = data.scoreBlue + 1;
-                if (data.activeTeam === 'red') updates.scoreRed = data.scoreRed + 1;
-            }
+            turnManager.events.onTurnStart = (team) => {
+                console.log(`Turn started for ${team.name}`);
+            };
 
-            update(roomRef, updates);
+            turnManager.events.onTurnEnd = (team) => {
+                console.log(`Turn ended for ${team.name}`);
+                lastDisplayedCardIndex = -1; 
+            };
+
+            turnManager.events.onTeamChange = (prevTeam, newTeam) => {
+                console.log(`Switched to ${newTeam.name}`);
+            };
         }
 
-        document.getElementById('btn-correct').addEventListener('click', () => drawNextCard(true));
-        document.getElementById('btn-skip').addEventListener('click', () => drawNextCard(false));
+        uiBtnStart.addEventListener('click', () => {
+            if (turnManager) turnManager.startTurn();
+        });
+
+        document.getElementById('btn-correct').addEventListener('click', () => {
+            if (turnManager) turnManager.drawCard(true);
+        });
+
+        document.getElementById('btn-skip').addEventListener('click', () => {
+            if (turnManager) turnManager.drawCard(false);
+        });
 
         let fadeTimeout;
-        function loadCardWithFade(index) {
+        function loadCardIfNeeded(index) {
+            if (index === lastDisplayedCardIndex) return;
+            lastDisplayedCardIndex = index;
+
             const card = cards[index];
             if (!card) return;
 
             uiCardContainer.classList.add('fade-out');
-
             clearTimeout(fadeTimeout);
+            
             fadeTimeout = setTimeout(() => {
-                
-                // טיפול בתמונה או באימוג'י
-                const mediaContainer = document.getElementById('card-media');
-                if (card.icon) {
-                    mediaContainer.innerHTML = `<div>${card.icon}</div>`;
-                } else if (card.image) {
-                    // יטען תמונה מהתיקייה העתידית שתוסיף (images/...)
-                    mediaContainer.innerHTML = `<img src="images/${card.image}" alt="${card.word}" onerror="this.src='https://via.placeholder.com/80?text=תמונה'">`;
-                } else {
-                    // למקרה שאין לא את זה ולא את זה
-                    mediaContainer.innerHTML = `<img src="https://via.placeholder.com/80?text=תמונה" alt="תמונה חסרה">`;
-                }
-
                 document.getElementById('main-word').textContent = card.word;
                 const uiTabooWords = document.getElementById('taboo-words');
                 uiTabooWords.innerHTML = '';
@@ -769,7 +686,6 @@
                     li.textContent = word;
                     uiTabooWords.appendChild(li);
                 });
-
                 uiCardContainer.classList.remove('fade-out');
             }, 300);
         }
