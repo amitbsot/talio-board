@@ -342,7 +342,6 @@
 
     <div id="personal-area">
         <button id="btn-start" class="btn-start hidden">התחל תור</button>
-        <button id="btn-end-game" class="btn-start hidden" style="background-color: #E74C3C; color: white; box-shadow: 0 4px 0 #C0392B;">סיים משחק וצא ללובי</button>
 
         <div id="role-message" class="message-box hidden"></div>
 
@@ -365,7 +364,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+        // הוספנו את onDisconnect לכאן:
+        import { getDatabase, ref, set, onValue, update, get, onDisconnect } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDiGUmCG08Ke6JYYR_gW6r-JMwdxt0aJDk",
@@ -419,7 +419,7 @@
             {"word":"שוקולד", "icon":"🍫", "taboo":["מתוק","קקאו","חום","פרה","טעים"]},
             {"word":"שעון", "icon":"⌚", "taboo":["זמן","מחוגים","יד","שעה","לענוד"]},
             {"word":"חתול", "icon":"🐱", "taboo":["מיאו","כלב","חיה","שפם","זנב"]},
-            {"word":"תפוח", "icon":"🍎", "taboo":["פרי","אדום","עץ","מתוק","לאכול"]},
+{"word":"תפוח", "icon":"🍎", "taboo":["פרי","אדום","עץ","מתוק","לאכול"]},
 {"word":"בננה", "icon":"🍌", "taboo":["צהוב","פרי","קוף","קליפה","מתוק"]},
 {"word":"כיסא", "icon":"🪑", "taboo":["לשבת","רגליים","שולחן","רהיט","בית"]},
 {"word":"שולחן", "icon":"🪵", "taboo":["לאכול","כיסא","רהיט","עץ","מטבח"]},
@@ -588,17 +588,32 @@
 
             async joinTeam() {
                 const snapshot = await get(this.roomRef);
-                if (!snapshot.exists()) {
+                let state = snapshot.val();
+                let totalActivePlayers = 0;
+
+                // בודקים כמה שחקנים רשומים כרגע בחדר
+                if (state && state.teams) {
+                    state.teams.forEach(t => {
+                        if (t.players) totalActivePlayers += Object.keys(t.players).length;
+                    });
+                }
+
+                // אם החדר לא קיים או שכל השחקנים התנתקו (0 שחקנים) - נאפס את החדר!
+                if (!snapshot.exists() || totalActivePlayers === 0) {
                     await this.initializeGame();
+                    state = (await get(this.roomRef)).val();
                 }
                 
-                const state = (await get(this.roomRef)).val();
                 const teamIndex = state.teams.findIndex(t => t.id === this.myTeamId);
                 
                 if (teamIndex !== -1) {
-                    await update(ref(db, `rooms/${this.roomRef.key}/teams/${teamIndex}/players`), {
-                        [this.playerId]: true
-                    });
+                    const playerRef = ref(db, `rooms/${this.roomRef.key}/teams/${teamIndex}/players/${this.playerId}`);
+                    
+                    // הוראה לשרת: תמחק את השחקן הזה כשהחיבור שלו נופל (דפדפן נסגר וכו')
+                    await onDisconnect(playerRef).remove();
+                    
+                    // רושמים את השחקן
+                    await set(playerRef, true);
                 }
             }
 
@@ -606,7 +621,6 @@
                 onValue(this.roomRef, (snapshot) => {
                     const newState = snapshot.val();
                     
-                    // אם הסטייט ריק והיינו במשחק, סימן שמישהו לחץ "סיים משחק" והחדר נמחק
                     if (!newState) {
                         if (this.currentState) {
                             window.location.reload(); 
@@ -723,7 +737,6 @@
         const uiStatus = document.getElementById('status');
         const uiCardContainer = document.getElementById('card-container');
         const uiBtnStart = document.getElementById('btn-start');
-        const uiBtnEndGame = document.getElementById('btn-end-game');
         const uiRoleMessage = document.getElementById('role-message');
         const uiCardRoleTitle = document.getElementById('card-role-title');
         const uiPlayersCount = document.getElementById('players-count');
@@ -779,7 +792,6 @@
             if(confirm("להתחיל משחק חדש ולאפס את הלוח? (הקלפים יתערבבו מחדש)")) {
                 await turnManager.initializeGame();
                 lastDisplayedCardIndex = -1;
-                uiBtnEndGame.classList.add('hidden'); // הסתר כפתור סיום אם אופס
             }
         };
 
@@ -840,9 +852,6 @@
                     document.getElementById('controls').classList.add('hidden');
                     uiRoleMessage.classList.add('hidden');
                     uiBtnStart.classList.add('hidden');
-                    
-                    // הצגת כפתור הסיום
-                    uiBtnEndGame.classList.remove('hidden');
 
                     if (localTimerInterval) {
                         clearInterval(localTimerInterval);
@@ -853,9 +862,7 @@
                     uiStatus.style.fontSize = "26px";
                     uiStatus.style.color = teamColors[winnerTeam.id];
                     
-                    return; // עוצרים פה, לא ממשיכים לעדכן תור
-                } else {
-                    uiBtnEndGame.classList.add('hidden');
+                    return; // אין כפתור יציאה – השחקנים יוכלו לצאת (לרענן/לסגור) ואז החדר יתאפס לבד לפעם הבאה.
                 }
 
                 const currentTeam = state.teams[state.currentTeamIndex];
@@ -957,13 +964,6 @@
 
         uiBtnStart.addEventListener('click', () => {
             if (turnManager) turnManager.startTurn();
-        });
-
-        // לחיצה על כפתור סיום המשחק מוחקת את החדר וגורמת לכולם להתרענן
-        uiBtnEndGame.addEventListener('click', async () => {
-            if (turnManager && confirm("בטוח שאתה רוצה לסיים את המשחק ולהוציא את כולם ללובי?")) {
-                await set(turnManager.roomRef, null);
-            }
         });
 
         document.getElementById('btn-correct').addEventListener('click', () => {
