@@ -18,7 +18,7 @@
             overflow-x: hidden;
         }
 
-        /* --- מסך לובי --- */
+        /* --- מסך לובי כניסה --- */
         #lobby {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -43,47 +43,61 @@
             color: #333;
         }
 
-        #team-buttons {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-
-        .team-btn {
-            width: 80%;
-            max-width: 300px;
-            padding: 20px;
+        .btn-join-room {
+            background-color: #3498DB;
+            color: white;
+            padding: 15px 30px;
             font-size: 22px;
-            margin: 8px;
-            border-radius: 15px;
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
-        }
-
-        .team-btn.blue { background-color: #D6EAF8; color: #2874A6; border-color: #AED6F1; box-shadow: 0 4px 0 #AED6F1; }
-        .team-btn.red { background-color: #FADBD8; color: #943126; border-color: #F5B7B1; box-shadow: 0 4px 0 #F5B7B1; }
-        .team-btn.purple { background-color: #E8DAEF; color: #6C3483; border-color: #D2B4DE; box-shadow: 0 4px 0 #D2B4DE; }
-        .team-btn.green { background-color: #D5F5E3; color: #1E8449; border-color: #ABEBC6; box-shadow: 0 4px 0 #ABEBC6; }
-        .team-btn.yellow { background-color: #FCF3CF; color: #B7950B; border-color: #F9E79F; box-shadow: 0 4px 0 #F9E79F; }
-        
-        .team-btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
-
-        #btn-add-team {
-            background: none;
-            border: 2px dashed #bbb;
-            color: #777;
-            padding: 12px 25px;
+            border: none;
             border-radius: 12px;
             cursor: pointer;
-            font-size: 16px;
             font-weight: bold;
-            margin-top: 15px;
+            box-shadow: 0 4px 0 #2980B9;
+            transition: transform 0.1s;
+        }
+        .btn-join-room:active { transform: translateY(4px); box-shadow: none; }
+
+        /* --- חלון הגדרות מודאלי --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 200;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .settings-group { margin-bottom: 20px; }
+        .settings-group h4 { margin: 0 0 10px 0; color: #555; font-size: 18px; }
+
+        .diff-buttons { display: flex; gap: 8px; justify-content: center; }
+        .diff-btn {
+            flex: 1; padding: 10px; font-size: 16px; font-weight: bold;
+            border-radius: 10px; border: 2px solid #ddd; cursor: pointer;
+            background-color: #f9f9f9; color: #666; transition: all 0.2s;
+        }
+
+        #modal-team-buttons {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+        }
+        .team-btn {
+            padding: 12px 15px; font-size: 16px; border-radius: 10px;
+            border: 3px solid transparent; cursor: pointer; font-weight: bold;
             transition: all 0.2s;
         }
-        #btn-add-team:hover { background-color: #f0f0f0; }
+        .team-btn.blue { background-color: #D6EAF8; color: #2874A6; }
+        .team-btn.red { background-color: #FADBD8; color: #943126; }
+        .team-btn.purple { background-color: #E8DAEF; color: #6C3483; }
+        .team-btn.green { background-color: #D5F5E3; color: #1E8449; }
+        .team-btn.yellow { background-color: #FCF3CF; color: #B7950B; }
 
         /* --- הלוח המשותף --- */
         #shared-board {
@@ -96,217 +110,95 @@
         }
 
         .game-title {
-            font-size: 26px;
-            font-weight: 900;
-            color: #f39c12;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
+            font-size: 26px; font-weight: 900; color: #f39c12;
+            letter-spacing: 1px; margin-bottom: 5px; text-align: left; flex:1;
         }
 
         .board-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            justify-content: center;
-            margin: 10px auto;
-            max-width: 600px;
-            padding: 10px;
-            background-color: #ffffff;
-            border-radius: 12px;
-            border: 2px solid #e0dcd3;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
+            margin: 10px auto; max-width: 600px; padding: 10px;
+            background-color: #ffffff; border-radius: 12px; border: 2px solid #e0dcd3;
         }
 
         .square {
-            width: 35px;
-            height: 35px;
-            background-color: #faf9f5;
-            border: 1px solid #ece8e0;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: #aaa;
-            transition: background 0.4s ease, transform 0.2s ease;
-            font-weight: bold;
+            width: 35px; height: 35px; background-color: #faf9f5;
+            border: 1px solid #ece8e0; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; color: #aaa; font-weight: bold;
         }
-
-        .square.finish {
-            border: 2px solid #f39c12;
-            color: #f39c12;
-            background-color: #fef9e7;
-        }
+        .square.finish { border: 2px solid #f39c12; color: #f39c12; background-color: #fef9e7; }
 
         .top-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-            padding: 0 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 5px; padding: 0 10px;
         }
 
-        #timer {
-            font-size: 40px;
-            font-weight: bold;
-            color: #e74c3c;
-            margin-top: 5px;
-        }
-
-        #btn-reset {
-            background-color: #fff;
-            color: #555;
-            border: 1px solid #ccc;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-        }
+        #timer { font-size: 40px; font-weight: bold; color: #e74c3c; margin-top: 5px; }
 
         /* --- האזור האישי --- */
         #personal-area {
-            padding: 20px 10px 40px 10px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
+            padding: 20px 10px 40px 10px; flex: 1; display: flex;
+            flex-direction: column; align-items: center; justify-content: flex-start;
         }
 
         .card {
-            background-color: white;
-            color: #333;
-            width: 90%;
-            max-width: 350px;
-            border-radius: 20px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
-            margin-top: 10px;
-            border: 1px solid #f0f0f0;
-            opacity: 1;
-            transform: translateY(0);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            background-color: white; color: #333;
+            width: 90%; max-width: 350px; border-radius: 20px;
+            padding: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            margin-bottom: 20px; margin-top: 10px; border: 1px solid #f0f0f0;
+            transition: opacity 0.3s ease, background-color 0.4s ease;
         }
 
-        .fade-out {
-            opacity: 0 !important;
-            transform: translateY(15px) !important;
-        }
+        .fade-out { opacity: 0 !important; }
 
         #card-role-title {
-            font-size: 18px; 
-            font-weight: bold; 
-            color: #444; 
-            margin-bottom: 15px;
-            background-color: #f8f9f9;
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px dashed #ccc;
+            font-size: 18px; font-weight: bold; color: #444; margin-bottom: 15px;
+            background-color: rgba(255,255,255,0.7); padding: 8px;
+            border-radius: 8px; border: 1px dashed #ccc;
         }
 
         .main-word-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 10px;
-            border-bottom: 2px dashed #eee;
-            padding-bottom: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 15px;
+            margin-bottom: 10px; border-bottom: 2px dashed rgba(0,0,0,0.1); padding-bottom: 10px;
         }
 
-        .main-word {
-            font-size: 32px;
-            font-weight: 900;
-            color: #2c3e50;
-        }
-
-        .card-icon {
-            font-size: 40px;
-        }
-
-        .taboo-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: 20px;
-            color: #e74c3c;
-            font-weight: bold;
-        }
-
+        .main-word { font-size: 32px; font-weight: 900; color: #2c3e50; }
+        .card-icon { font-size: 40px; }
+        .taboo-list { list-style: none; padding: 0; margin: 0; font-size: 20px; color: #c0392b; font-weight: bold; }
         .taboo-list li { margin: 8px 0; }
 
-        .controls {
-            display: flex;
-            width: 95%;
-            max-width: 400px;
-            gap: 15px;
-        }
-
+        .controls { display: flex; width: 95%; max-width: 400px; gap: 15px; }
         button.action-btn {
-            flex: 1;
-            padding: 18px 10px;
-            font-size: 20px;
-            font-weight: bold;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            color: #333;
-            transition: transform 0.1s;
+            flex: 1; padding: 18px 10px; font-size: 20px; font-weight: bold;
+            border: none; border-radius: 12px; cursor: pointer; color: #333;
         }
-
-        button.action-btn:active { transform: scale(0.95); }
         .btn-correct { background-color: #A9DFBF; box-shadow: 0 4px 0 #7DCEA0;}
         .btn-skip { background-color: #F5B7B1; box-shadow: 0 4px 0 #F1948A;}
         
         .btn-start { 
-            background-color: #F9E79F; 
-            color: #7D6608; 
-            width: 90%; 
-            max-width: 350px; 
-            margin-top: 20px; 
-            box-shadow: 0 4px 0 #F4D03F; 
-            border:none; 
-            padding: 18px; 
-            font-size: 20px; 
-            font-weight: bold; 
-            border-radius: 12px; 
-            cursor: pointer;
+            background-color: #A9DFBF; /* ירוק פסטל */
+            color: #1E8449; 
+            width: 90%; max-width: 350px; margin-top: 20px; 
+            box-shadow: 0 4px 0 #7DCEA0; 
+            border:none; padding: 18px; font-size: 22px; font-weight: bold; 
+            border-radius: 12px; cursor: pointer; transition: all 0.1s;
         }
+        .btn-start:active { transform: translateY(4px); box-shadow: none; }
 
         .hidden { display: none !important; }
 
         .message-box {
-            background-color: #e8f8f5;
-            color: #117a65;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            width: 90%;
-            max-width: 350px;
-            margin-top: 20px;
-            border: 1px solid #d1f2eb;
+            background-color: #e8f8f5; color: #117a65; padding: 15px;
+            border-radius: 10px; text-align: center; font-size: 18px; font-weight: bold;
+            width: 90%; max-width: 350px; margin-top: 20px; border: 1px solid #d1f2eb;
         }
 
-        .players-count {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
+        .players-count { font-size: 14px; color: #7f8c8d; margin-bottom: 10px; }
 
         @media (max-width: 400px) {
             .square { width: 28px; height: 28px; font-size: 10px; border-radius: 6px; }
             .game-title { font-size: 22px; }
-            .main-word { font-size: 26px; }
-            .card-icon { font-size: 30px; }
-            .taboo-list { font-size: 18px; }
-            button.action-btn { font-size: 18px; padding: 15px 5px; }
-            #card-role-title { font-size: 16px; }
+            .btn-start { font-size: 18px; }
         }
     </style>
 </head>
@@ -314,26 +206,64 @@
 
     <div id="lobby">
         <h1 class="game-title" style="font-size: 42px; margin-bottom: 10px; text-align: center;">TALIO-BOARD</h1>
-        <h3 style="margin-bottom: 20px; color: #777;">הכנס שם חדר ובחר קבוצה:</h3>
+        <h3 style="margin-bottom: 20px; color: #777;">הכנס שם חדר להתחלה:</h3>
         <input type="text" id="room-input" class="room-input" placeholder="שם החדר (למשל: משפחת כהן)">
-        
-        <div id="team-buttons">
-            <button class="team-btn blue" onclick="joinGame('blue')">קבוצה תכלת</button>
-            <button class="team-btn red" onclick="joinGame('red')">קבוצה ורודה</button>
+        <button class="btn-join-room" onclick="enterRoom()">היכנס לחדר</button>
+    </div>
+
+    <div id="setup-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modal-title">הגדרות חדר</h2>
+            
+            <div class="settings-group">
+                <h4>רמת קושי</h4>
+                <div class="diff-buttons">
+                    <button class="diff-btn" id="diff-easy" onclick="setDifficulty('easy')">קל</button>
+                    <button class="diff-btn" id="diff-medium" onclick="setDifficulty('medium')">בינוני</button>
+                    <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">קשה</button>
+                </div>
+            </div>
+
+            <div class="settings-group" id="team-selection-group">
+                <h4>בחירת קבוצה</h4>
+                <div id="modal-team-buttons">
+                    <button class="team-btn small blue" onclick="selectTeam('blue')">תכלת</button>
+                    <button class="team-btn small red" onclick="selectTeam('red')">ורודה</button>
+                    <button class="team-btn small purple" onclick="selectTeam('purple')">סגולה</button>
+                    <button class="team-btn small green" onclick="selectTeam('green')">ירוקה</button>
+                    <button class="team-btn small yellow" onclick="selectTeam('yellow')">צהובה</button>
+                </div>
+            </div>
+            
+            <div id="admin-setup-controls" class="hidden">
+                <button id="btn-modal-start" class="btn-start" style="width:100%; margin-top:10px;" onclick="startGame()">התחל משחק</button>
+            </div>
+            
+            <div id="admin-edit-controls" class="hidden">
+                <p style="color:#e74c3c; font-size:14px; font-weight:bold; margin-bottom: 15px;">שינוי הגדרות יתחיל את המשחק מחדש</p>
+                <div style="display:flex; gap:10px;">
+                    <button id="btn-modal-confirm" class="btn-start" style="flex:1; margin-top:0;" onclick="confirmSettings()">אישור</button>
+                    <button id="btn-modal-cancel" style="flex:1; padding:18px; border-radius:12px; border:2px solid #ccc; background:#eee; font-weight:bold; cursor:pointer;" onclick="closeModal()">ביטול</button>
+                </div>
+            </div>
+
+            <div id="non-admin-msg" class="hidden" style="margin-top:20px; color:#777; font-weight:bold; font-size: 16px;">
+                ממתין למנהל החדר שיתחיל את המשחק...
+            </div>
         </div>
-        
-        <button id="btn-add-team" onclick="addExtraTeam()">+ הוסף קבוצה</button>
     </div>
 
     <div id="shared-board">
         <div class="top-info">
-            <button id="btn-reset" onclick="resetGame()">משחק חדש</button>
+            <div style="display:flex; gap:10px; align-items:center; flex: 2;">
+                <button id="btn-settings" class="hidden" style="font-size: 24px; background: none; border: none; cursor: pointer; padding: 0;" onclick="openSettings()">⚙️</button>
+                
+                <div id="player-info-display" style="font-size: 14px; font-weight: bold; padding: 5px 10px; border-radius: 8px; transition: all 0.3s;"></div>
+            </div>
             <div class="game-title">TALIO</div>
-            <div style="font-size: 14px; color: #888; font-weight: bold;" id="room-display"></div>
         </div>
         
         <div id="players-count" class="players-count"></div>
-
         <div class="board-grid" id="board-grid"></div>
 
         <div id="timer">01:00</div>
@@ -341,7 +271,7 @@
     </div>
 
     <div id="personal-area">
-        <button id="btn-start" class="btn-start hidden">התחל תור</button>
+        <button id="btn-start-turn" class="btn-start hidden">התחל משחק</button>
 
         <div id="role-message" class="message-box hidden"></div>
 
@@ -364,7 +294,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        // הוספנו את onDisconnect לכאן:
         import { getDatabase, ref, set, onValue, update, get, onDisconnect } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -381,6 +310,9 @@
         let turnManager = null;
         let localTimerInterval = null;
         let lastDisplayedCardIndex = -1;
+        let myTeamId = null;
+        let myPlayerNumber = null;
+        let isEditMode = false;
 
         const MAX_STEPS = 30;
         const boardGrid = document.getElementById('board-grid');
@@ -396,145 +328,31 @@
 
         const teamColors = { 'blue': '#2874A6', 'red': '#943126', 'purple': '#6C3483', 'green': '#1E8449', 'yellow': '#B7950B' };
         const teamBgColors = { 'blue': '#D6EAF8', 'red': '#FADBD8', 'purple': '#E8DAEF', 'green': '#D5F5E3', 'yellow': '#FCF3CF' };
+        const teamNames = { 'blue': 'תכלת', 'red': 'ורודה', 'purple': 'סגולה', 'green': 'ירוקה', 'yellow': 'צהובה' };
 
+        // עודכנו ל-6 מילים כדי לתמוך ברמת קושי 'קשה'
         const cards = [
-            {"word":"כלב", "icon":"🐶", "taboo":["חיה","נבחן","חתול","עצם","רצועה"]},
-            {"word":"שמש", "icon":"☀️", "taboo":["יום","אור","חם","שמיים","צהוב"]},
-            {"word":"אופניים", "icon":"🚲", "taboo":["גלגלים","לרכוב","פדלים","קסדה","כביש"]},
-            {"word":"פיצה", "icon":"🍕", "taboo":["איטליה","גבינה","אוכל","משלוח","משולש"]},
-            {"word":"ים", "icon":"🌊", "taboo":["מים","חול","גלים","קיץ","מטקות"]},
-            {"word":"מחשב", "icon":"💻", "taboo":["מקלדת","עכבר","מסך","אינטרנט","לעבוד"]},
-            {"word":"טיסה", "icon":"✈️", "taboo":["מטוס","שדה תעופה","חו''ל","כרטיס","כנפיים"]},
-            {"word":"ירושלים", "icon":"🕍", "taboo":["עיר","בירה","כותל","קודש","זהב"]},
-            {"word":"כדורגל", "icon":"⚽", "taboo":["מגרש","שער","מסי","ספורט","לבעוט"]},
-            {"word":"פלאפון", "icon":"📱", "taboo":["מסך","להתקשר","סוללה","אפל","מטען"]},
-            {"word":"קפה", "icon":"☕", "taboo":["בוקר","לשתות","חלב","ספל","הפוך"]},
-            {"word":"מיטה", "icon":"🛏️", "taboo":["לישון","שמיכה","כרית","לילה","מזרן"]},
-            {"word":"רכבת", "icon":"🚆", "taboo":["פסים","תחנה","קרון","כרטיס","לנסוע"]},
-            {"word":"מורה", "icon":"👩‍🏫", "taboo":["בית ספר","תלמידים","כיתה","לוח","ללמד"]},
-            {"word":"סרט", "icon":"🎬", "taboo":["קולנוע","פופקורן","לראות","שחקן","טלוויזיה"]},
-            {"word":"חורף", "icon":"🌧️", "taboo":["קר","גשם","מטריה","עונה","מעיל"]},
-            {"word":"גיטרה", "icon":"🎸", "taboo":["לנגן","מיתרים","כלי","מוזיקה","חשמלית"]},
-            {"word":"רופא", "icon":"👨‍⚕️", "taboo":["חולה","בית חולים","תרופה","מרפאה","בריאות"]},
-            {"word":"שוקולד", "icon":"🍫", "taboo":["מתוק","קקאו","חום","פרה","טעים"]},
-            {"word":"שעון", "icon":"⌚", "taboo":["זמן","מחוגים","יד","שעה","לענוד"]},
-            {"word":"חתול", "icon":"🐱", "taboo":["מיאו","כלב","חיה","שפם","זנב"]},
-{"word":"תפוח", "icon":"🍎", "taboo":["פרי","אדום","עץ","מתוק","לאכול"]},
-{"word":"בננה", "icon":"🍌", "taboo":["צהוב","פרי","קוף","קליפה","מתוק"]},
-{"word":"כיסא", "icon":"🪑", "taboo":["לשבת","רגליים","שולחן","רהיט","בית"]},
-{"word":"שולחן", "icon":"🪵", "taboo":["לאכול","כיסא","רהיט","עץ","מטבח"]},
-{"word":"מכונית", "icon":"🚗", "taboo":["נהג","כביש","גלגלים","לנסוע","דלק"]},
-{"word":"אוטובוס", "icon":"🚌", "taboo":["תחנה","נהג","כרטיס","עיר","לנסוע"]},
-{"word":"אופנוע", "icon":"🏍️", "taboo":["קסדה","כביש","מהיר","רעש","דו"]},
-{"word":"גלידה", "icon":"🍦", "taboo":["קר","מתוק","קיץ","גביע","טעם"]},
-{"word":"עוגה", "icon":"🎂", "taboo":["יומולדת","נר","מתוק","לאפות","פרוסה"]},
-{"word":"מים", "icon":"💧", "taboo":["לשתות","ברז","ים","שקוף","קר"]},
-{"word":"מטריה", "icon":"☂️", "taboo":["גשם","להחזיק","חורף","רטוב","שמיים"]},
-{"word":"כובע", "icon":"🧢", "taboo":["ראש","שמש","ללבוש","מצחייה","בגד"]},
-{"word":"חולצה", "icon":"👕", "taboo":["בגד","ללבוש","שרוול","ארון","בד"]},
-{"word":"נעליים", "icon":"👟", "taboo":["רגל","ללכת","שרוכים","ספורט","לנעול"]},
-{"word":"גרביים", "icon":"🧦", "taboo":["רגל","נעליים","ללבוש","בד","חורף"]},
-{"word":"כדור", "icon":"🏀", "taboo":["לזרוק","לשחק","עגול","ספורט","יד"]},
-{"word":"בלון", "icon":"🎈", "taboo":["אוויר","מסיבה","לעוף","אדום","ילדים"]},
-{"word":"דג", "icon":"🐟", "taboo":["ים","מים","שחייה","קשקשים","חכה"]},
-{"word":"ציפור", "icon":"🐦", "taboo":["לעוף","כנפיים","שמיים","קן","ציוץ"]},
-{"word":"אריה", "icon":"🦁", "taboo":["חיה","מלך","יער","שאגה","אפריקה"]},
-{"word":"פיל", "icon":"🐘", "taboo":["גדול","חדק","אפריקה","חיה","אוזניים"]},
-{"word":"פרה", "icon":"🐄", "taboo":["חלב","רפת","חיה","עשב","שחור"]},
-{"word":"תרנגול", "icon":"🐓", "taboo":["בוקר","לול","כנפיים","אדום","קרקור"]},
-{"word":"ביצה", "icon":"🥚", "taboo":["תרנגולת","לבשל","חביתה","לבן","צהוב"]},
-{"word":"לחם", "icon":"🍞", "taboo":["מאפייה","לאכול","כריך","פרוסה","קמח"]},
-{"word":"אורז", "icon":"🍚", "taboo":["לבן","לאכול","גרגרים","סיר","אסיה"]},
-{"word":"מרק", "icon":"🍲", "taboo":["חם","כף","צלחת","ירקות","חורף"]},
-{"word":"סלט", "icon":"🥗", "taboo":["ירקות","בריא","קערה","חסה","לאכול"]},
-{"word":"מלפפון", "icon":"🥒", "taboo":["ירוק","סלט","ירק","ארוך","חמוץ"]},
-{"word":"עגבנייה", "icon":"🍅", "taboo":["אדום","סלט","ירק","רוטב","עגול"]},
-{"word":"גזר", "icon":"🥕", "taboo":["כתום","ירק","ארנב","ארוך","בריא"]},
-{"word":"בצל", "icon":"🧅", "taboo":["דמעות","סגול","לחתוך","ירק","מטבח"]},
-{"word":"תפוז", "icon":"🍊", "taboo":["כתום","פרי","מיץ","קליפה","עגול"]},
-{"word":"אבטיח", "icon":"🍉", "taboo":["קיץ","אדום","גרעינים","פרי","גדול"]},
-{"word":"ענבים", "icon":"🍇", "taboo":["סגול","אשכול","פרי","קטן","יין"]},
-{"word":"דבש", "icon":"🍯", "taboo":["מתוק","דבורה","צהוב","צנצנת","ראש השנה"]},
-{"word":"סוכר", "icon":"🍬", "taboo":["מתוק","לבן","קפה","עוגה","גרגרים"]},
-{"word":"מלח", "icon":"🧂", "taboo":["טעם","לבן","ים","תיבול","אוכל"]},
-{"word":"פלפל", "icon":"🌶️", "taboo":["חריף","אדום","ירק","תיבול","פיקנטי"]},
-{"word":"ספר", "icon":"📖", "taboo":["לקרוא","עמודים","ספרייה","סיפור","אותיות"]},
-{"word":"מחברת", "icon":"📓", "taboo":["לכתוב","בית ספר","דפים","עט","כיתה"]},
-{"word":"עיפרון", "icon":"✏️", "taboo":["לכתוב","לחדד","מחק","עץ","צהוב"]},
-{"word":"עט", "icon":"🖊️", "taboo":["דיו","לכתוב","כחול","נייר","בית ספר"]},
-{"word":"מחק", "icon":"🩹", "taboo":["עיפרון","לטעות","למחוק","לבן","גומי"]},
-{"word":"תיק", "icon":"🎒", "taboo":["בית ספר","גב","ספרים","לסחוב","רוכסן"]},
-{"word":"חלון", "icon":"🪟", "taboo":["זכוכית","אור","לפתוח","וילון","בית"]},
-{"word":"דלת", "icon":"🚪", "taboo":["לפתוח","לסגור","ידית","בית","כניסה"]},
-{"word":"מקרר", "icon":"🧊", "taboo":["קר","אוכל","מטבח","דלת","חשמל"]},
-{"word":"תנור", "icon":"🔥", "taboo":["לאפות","חם","מטבח","עוגה","חשמל"]},
-{"word":"מדיח", "icon":"🍽️", "taboo":["כלים","מים","מטבח","לנקות","סבון"]},
-{"word":"סבון", "icon":"🧼", "taboo":["לשטוף","מים","ריח","אמבטיה","נקי"]},
-{"word":"מברשת שיניים", "icon":"🪥", "taboo":["שיניים","לצחצח","משחה","בוקר","אמבטיה"]},
-{"word":"שמפו", "icon":"🧴", "taboo":["שיער","להתקלח","בקבוק","קצף","ריח"]},
-{"word":"מגבת", "icon":"🛁", "taboo":["להתנגב","אמבטיה","מים","רטוב","בד"]},
-{"word":"כרית", "icon":"🛌", "taboo":["לישון","ראש","מיטה","רכה","לילה"]},
-{"word":"שמיכה", "icon":"🧣", "taboo":["חורף","חם","מיטה","לישון","כיסוי"]},
-{"word":"גן", "icon":"🌳", "taboo":["ילדים","מתקנים","חול","נדנדה","חוץ"]},
-{"word":"נדנדה", "icon":"🛝", "taboo":["גן","לשבת","קדימה","אחורה","ילדים"]},
-{"word":"ים המלח", "icon":"🏖️", "taboo":["מלוח","לצוף","נמוך","ישראל","מים"]},
-{"word":"מדבר", "icon":"🏜️", "taboo":["חול","חם","יבש","גמל","דרום"]},
-{"word":"יער", "icon":"🌲", "taboo":["עצים","ירוק","חיות","טבע","לטייל"]},
-{"word":"הר", "icon":"⛰️", "taboo":["גבוה","לטפס","נוף","אבן","טיול"]},
-{"word":"נהר", "icon":"🏞️", "taboo":["מים","לזרום","גשר","טבע","ארוך"]},
-{"word":"אי", "icon":"🏝️", "taboo":["ים","חול","בודד","חופשה","מים"]},
-{"word":"מצלמה", "icon":"📷", "taboo":["לצלם","תמונה","עדשה","פלאש","זיכרון"]},
-{"word":"תמונה", "icon":"🖼️", "taboo":["לצלם","מסגרת","זיכרון","קיר","גלריה"]},
-{"word":"מתנה", "icon":"🎁", "taboo":["יומולדת","עטיפה","קופסה","להביא","הפתעה"]},
-{"word":"מסיבה", "icon":"🥳", "taboo":["בלונים","מוזיקה","ריקודים","חברים","עוגה"]},
-{"word":"ריקוד", "icon":"💃", "taboo":["מוזיקה","לזוז","מסיבה","רגליים","קצב"]},
-{"word":"שיר", "icon":"🎵", "taboo":["לשיר","מוזיקה","קול","מילים","רדיו"]},
-{"word":"תוף", "icon":"🥁", "taboo":["להכות","קצב","מוזיקה","רעש","כלי"]},
-{"word":"פסנתר", "icon":"🎹", "taboo":["קלידים","לנגן","שחור","לבן","מוזיקה"]},
-{"word":"כינור", "icon":"🎻", "taboo":["מיתרים","קשת","לנגן","מוזיקה","קטן"]},
-{"word":"חבר", "icon":"👬", "taboo":["יחד","לשחק","כיתה","אהוב","חברות"]},
-{"word":"משפחה", "icon":"👨‍👩‍👧‍👦", "taboo":["אמא","אבא","ילדים","בית","קרובים"]},
-{"word":"אמא", "icon":"👩", "taboo":["ילד","משפחה","אישה","אהבה","בית"]},
-{"word":"אבא", "icon":"👨", "taboo":["ילד","משפחה","גבר","בית","אהבה"]},
-{"word":"תינוק", "icon":"👶", "taboo":["קטן","בכי","עגלה","חיתול","חלב"]},
-{"word":"ילד", "icon":"🧒", "taboo":["קטן","בית ספר","לשחק","משפחה","חברים"]},
-{"word":"ילדה", "icon":"👧", "taboo":["קטנה","חברים","בית ספר","לשחק","שמלה"]},
-{"word":"כדור סל", "icon":"🏀", "taboo":["לזרוק","סל","גבוה","מגרש","ספורט"]},
-{"word":"בריכה", "icon":"🏊", "taboo":["מים","לשחות","קיץ","בגד ים","כלור"]},
-{"word":"מגלשה", "icon":"🛝", "taboo":["גן","לגלוש","ילדים","למעלה","למטה"]},
-{"word":"חוף", "icon":"🏖️", "taboo":["ים","חול","שמש","קיץ","מים"]},
-{"word":"מעלית", "icon":"🛗", "taboo":["קומה","בניין","לעלות","לרדת","כפתור"]},
-{"word":"מדרגות", "icon":"🪜", "taboo":["לעלות","לרדת","בית","שלבים","רגליים"]},
-{"word":"בית", "icon":"🏠", "taboo":["לגור","חדרים","משפחה","גג","דלת"]},
-{"word":"בית ספר", "icon":"🏫", "taboo":["מורה","תלמידים","כיתה","ללמוד","צלצול"]},
-{"word":"חנות", "icon":"🏪", "taboo":["לקנות","כסף","מוצרים","קופה","מדפים"]},
-{"word":"כסף", "icon":"💰", "taboo":["לקנות","שקל","מטבע","שטר","בנק"]},
-{"word":"בנק", "icon":"🏦", "taboo":["כסף","חשבון","לשמור","שקל","כרטיס"]},
-{"word":"מפתח", "icon":"🔑", "taboo":["דלת","לפתוח","ברזל","בית","מנעול"]},
-{"word":"משקפיים", "icon":"👓", "taboo":["לראות","עיניים","מסגרת","זכוכית","לענוד"]},
-{"word":"שעון מעורר", "icon":"⏰", "taboo":["בוקר","צלצול","להתעורר","שעה","מיטה"]},
-{"word":"אופנה", "icon":"👗", "taboo":["בגדים","ללבוש","מעצב","תצוגה","סטייל"]},
-{"word":"מעיל", "icon":"🧥", "taboo":["חורף","קר","ללבוש","גשם","כיסים"]},
-{"word":"כפפות", "icon":"🧤", "taboo":["ידיים","חורף","קר","ללבוש","שלג"]},
-{"word":"שלג", "icon":"❄️", "taboo":["קר","לבן","חורף","הר","קפוא"]},
-{"word":"קיץ", "icon":"🌞", "taboo":["חם","שמש","ים","חופש","גלידה"]},
-{"word":"אביב", "icon":"🌸", "taboo":["פרחים","עונה","נעים","לבלוב","פסח"]},
-{"word":"סתיו", "icon":"🍂", "taboo":["עלים","נושרים","עונה","רוח","קריר"]},
-{"word":"כדורעף", "icon":"🏐", "taboo":["רשת","לקפוץ","מגרש","ספורט","ידיים"]},
-{"word":"טניס", "icon":"🎾", "taboo":["מחבט","כדור","מגרש","ספורט","רשת"]},
-{"word":"שוק", "icon":"🛒", "taboo":["ירקות","לקנות","דוכן","אנשים","כסף"]},
-{"word":"מונית", "icon":"🚕", "taboo":["נהג","צהוב","לנסוע","כסף","עיר"]},
-{"word":"כבאי", "icon":"🚒", "taboo":["אש","מים","משאית","להציל","קסדה"]},
-{"word":"שוטר", "icon":"👮", "taboo":["חוק","מדים","לעצור","רחוב","ניידת"]},
-{"word":"חקלאי", "icon":"🚜", "taboo":["שדה","טרקטור","ירקות","אדמה","לגדל"]},
-{"word":"טבח", "icon":"👨‍🍳", "taboo":["לבשל","מטבח","אוכל","סכין","מסעדה"]},
-{"word":"נהג", "icon":"🚘", "taboo":["מכונית","כביש","הגה","לנסוע","רישיון"]},
-{"word":"כרטיס", "icon":"🎫", "taboo":["כניסה","לשלם","סרט","טיסה","אירוע"]},
-{"word":"פנס", "icon":"🔦", "taboo":["אור","חושך","להדליק","סוללה","לילה"]},
-{"word":"חושך", "icon":"🌑", "taboo":["לילה","שחור","אור","פחד","כוכבים"]},
-{"word":"כוכב", "icon":"⭐", "taboo":["שמיים","לילה","צהוב","זוהר","חלל"]},
-{"word":"ירח", "icon":"🌙", "taboo":["לילה","שמיים","עגול","כוכבים","חלל"]},
-{"word":"חללית", "icon":"🚀", "taboo":["חלל","לטוס","אסטרונאוט","כוכבים","שמיים"]}
+            {"word":"כלב", "icon":"🐶", "taboo":["חיה","נבחן","חתול","עצם","רצועה","זנב"]},
+            {"word":"שמש", "icon":"☀️", "taboo":["יום","אור","חם","שמיים","צהוב","כוכב"]},
+            {"word":"אופניים", "icon":"🚲", "taboo":["גלגלים","לרכוב","פדלים","קסדה","כביש","כידון"]},
+            {"word":"פיצה", "icon":"🍕", "taboo":["איטליה","גבינה","אוכל","משלוח","משולש","בצק"]},
+            {"word":"ים", "icon":"🌊", "taboo":["מים","חול","גלים","קיץ","מטקות","מלח"]},
+            {"word":"מחשב", "icon":"💻", "taboo":["מקלדת","עכבר","מסך","אינטרנט","לעבוד","לפטופ"]},
+            {"word":"טיסה", "icon":"✈️", "taboo":["מטוס","שדה תעופה","חו''ל","כרטיס","כנפיים","דיילת"]},
+            {"word":"ירושלים", "icon":"🕍", "taboo":["עיר","בירה","כותל","קודש","זהב","מקדש"]},
+            {"word":"כדורגל", "icon":"⚽", "taboo":["מגרש","שער","מסי","ספורט","לבעוט","שופט"]},
+            {"word":"פלאפון", "icon":"📱", "taboo":["מסך","להתקשר","סוללה","אפל","מטען","אפליקציה"]},
+            {"word":"קפה", "icon":"☕", "taboo":["בוקר","לשתות","חלב","ספל","הפוך","קפאין"]},
+            {"word":"מיטה", "icon":"🛏️", "taboo":["לישון","שמיכה","כרית","לילה","מזרן","חלום"]},
+            {"word":"רכבת", "icon":"🚆", "taboo":["פסים","תחנה","קרון","כרטיס","לנסוע","קטר"]},
+            {"word":"מורה", "icon":"👩‍🏫", "taboo":["בית ספר","תלמידים","כיתה","לוח","ללמד","מבחן"]},
+            {"word":"סרט", "icon":"🎬", "taboo":["קולנוע","פופקורן","לראות","שחקן","טלוויזיה","במאי"]},
+            {"word":"חורף", "icon":"🌧️", "taboo":["קר","גשם","מטריה","עונה","מעיל","שלג"]},
+            {"word":"גיטרה", "icon":"🎸", "taboo":["לנגן","מיתרים","כלי","מוזיקה","חשמלית","מפרט"]},
+            {"word":"רופא", "icon":"👨‍⚕️", "taboo":["חולה","בית חולים","תרופה","מרפאה","בריאות","סטטוסקופ"]},
+            {"word":"שוקולד", "icon":"🍫", "taboo":["מתוק","קקאו","חום","פרה","טעים","חפיסה"]},
+            {"word":"שעון", "icon":"⌚", "taboo":["זמן","מחוגים","יד","שעה","לענוד","מעורר"]},
+            {"word":"חתול", "icon":"🐱", "taboo":["מיאו","כלב","חיה","שפם","זנב","פח"]}
         ];
 
         function shuffleDeck(array) {
@@ -548,25 +366,24 @@
         }
 
         class GameTurnManager {
-            constructor(roomRef, playerId, myTeamId) {
+            constructor(roomRef, playerId) {
                 this.roomRef = roomRef;
                 this.playerId = playerId;
-                this.myTeamId = myTeamId;
                 this.currentState = null;
 
                 this.events = {
-                    onTurnStart: (team) => {},
-                    onTurnEnd: (team) => {},
-                    onTeamChange: (prevTeam, newTeam) => {},
                     onStateUpdate: (state) => {}
                 };
             }
 
-            async initializeGame() {
+            async initializeRoom() {
                 let fullDeck = Array.from({length: cards.length}, (_, i) => i);
                 fullDeck = shuffleDeck(fullDeck);
 
                 const initialState = {
+                    adminId: this.playerId,
+                    gameStarted: false,
+                    difficulty: 'medium',
                     teams: [
                         { id: 'blue', name: 'תכלת', players: {}, score: 0 },
                         { id: 'red', name: 'ורוד', players: {}, score: 0 },
@@ -586,51 +403,28 @@
                 await set(this.roomRef, initialState);
             }
 
-            async joinTeam() {
+            async connect() {
                 const snapshot = await get(this.roomRef);
                 let state = snapshot.val();
                 let totalActivePlayers = 0;
 
-                // בודקים כמה שחקנים רשומים כרגע בחדר
                 if (state && state.teams) {
                     state.teams.forEach(t => {
                         if (t.players) totalActivePlayers += Object.keys(t.players).length;
                     });
                 }
 
-                // אם החדר לא קיים או שכל השחקנים התנתקו (0 שחקנים) - נאפס את החדר!
                 if (!snapshot.exists() || totalActivePlayers === 0) {
-                    await this.initializeGame();
-                    state = (await get(this.roomRef)).val();
-                }
-                
-                const teamIndex = state.teams.findIndex(t => t.id === this.myTeamId);
-                
-                if (teamIndex !== -1) {
-                    const playerRef = ref(db, `rooms/${this.roomRef.key}/teams/${teamIndex}/players/${this.playerId}`);
-                    
-                    // הוראה לשרת: תמחק את השחקן הזה כשהחיבור שלו נופל (דפדפן נסגר וכו')
-                    await onDisconnect(playerRef).remove();
-                    
-                    // רושמים את השחקן
-                    await set(playerRef, true);
+                    await this.initializeRoom();
                 }
             }
 
             listenToState() {
                 onValue(this.roomRef, (snapshot) => {
                     const newState = snapshot.val();
-                    
-                    if (!newState) {
-                        if (this.currentState) {
-                            window.location.reload(); 
-                        }
-                        return;
-                    }
+                    if (!newState) { window.location.reload(); return; }
 
-                    const prevState = this.currentState;
                     this.currentState = newState;
-
                     newState.teams.forEach(team => {
                         team.playerCount = team.players ? Object.keys(team.players).length : 0;
                     });
@@ -650,20 +444,6 @@
                         }
                     }
 
-                    if (prevState) {
-                        const prevTeam = prevState.teams[prevState.currentTeamIndex];
-                        const currentTeam = newState.teams[newState.currentTeamIndex];
-
-                        if (prevState.turnStatus === 'active' && newState.turnStatus === 'ended') {
-                            this.events.onTurnEnd(prevTeam);
-                        }
-                        if (prevState.currentTeamIndex !== newState.currentTeamIndex) {
-                            this.events.onTeamChange(prevTeam, currentTeam);
-                        }
-                        if (prevState.turnStatus !== 'active' && newState.turnStatus === 'active') {
-                            this.events.onTurnStart(currentTeam);
-                        }
-                    }
                     this.events.onStateUpdate(this.currentState);
                 });
             }
@@ -733,67 +513,121 @@
         }
 
         const uiLobby = document.getElementById('lobby');
+        const uiModal = document.getElementById('setup-modal');
         const uiTimer = document.getElementById('timer');
         const uiStatus = document.getElementById('status');
         const uiCardContainer = document.getElementById('card-container');
-        const uiBtnStart = document.getElementById('btn-start');
+        const uiBtnStartTurn = document.getElementById('btn-start-turn');
         const uiRoleMessage = document.getElementById('role-message');
         const uiCardRoleTitle = document.getElementById('card-role-title');
         const uiPlayersCount = document.getElementById('players-count');
+        const uiPlayerInfoDisplay = document.getElementById('player-info-display');
 
-        const extraTeamsList = [
-            { id: 'purple', name: 'סגולה', class: 'purple' },
-            { id: 'green', name: 'ירוקה', class: 'green' },
-            { id: 'yellow', name: 'צהובה', class: 'yellow' }
-        ];
-        let addedTeamsCount = 0;
-
-        window.addExtraTeam = function() {
-            if (addedTeamsCount < extraTeamsList.length) {
-                const t = extraTeamsList[addedTeamsCount];
-                const btn = document.createElement('button');
-                btn.className = `team-btn ${t.class}`;
-                btn.innerText = `קבוצה ${t.name}`;
-                btn.onclick = () => joinGame(t.id);
-                document.getElementById('team-buttons').appendChild(btn);
-                
-                addedTeamsCount++;
-                if (addedTeamsCount >= extraTeamsList.length) {
-                    document.getElementById('btn-add-team').style.display = 'none';
-                }
-            }
-        };
-
-        window.joinGame = async function(teamId) {
+        window.enterRoom = async function() {
             const roomId = document.getElementById('room-input').value.trim();
             if(!roomId) { alert("אנא הכנס שם חדר!"); return; }
 
             uiLobby.style.display = 'none';
-            const state = turnManager ? turnManager.currentState : null;
-            let teamName = "קבוצה";
-            if (teamId === 'blue') teamName = "תכלת";
-            else if (teamId === 'red') teamName = "ורוד";
-            else if (teamId === 'purple') teamName = "סגול";
-            else if (teamId === 'green') teamName = "ירוק";
-            else if (teamId === 'yellow') teamName = "צהוב";
-
-            document.getElementById('room-display').textContent = `חדר: ${roomId} | ${teamName}`;
-            
             const roomRef = ref(db, 'rooms/' + roomId);
-            turnManager = new GameTurnManager(roomRef, myPlayerId, teamId);
+            turnManager = new GameTurnManager(roomRef, myPlayerId);
             
-            await turnManager.joinTeam();
+            await turnManager.connect();
             setupTurnManagerEvents();
             turnManager.listenToState();
         };
 
-        window.resetGame = async function() {
-            if(!turnManager) return;
-            if(confirm("להתחיל משחק חדש ולאפס את הלוח? (הקלפים יתערבבו מחדש)")) {
-                await turnManager.initializeGame();
-                lastDisplayedCardIndex = -1;
+        window.selectTeam = async function(teamId) {
+            if(!turnManager || !turnManager.currentState) return;
+            const state = turnManager.currentState;
+            
+            // הסרה מקבוצה קודמת אם קיימת
+            for(let i=0; i<state.teams.length; i++) {
+                if(state.teams[i].players && state.teams[i].players[myPlayerId]) {
+                    const oldRef = ref(db, `rooms/${turnManager.roomRef.key}/teams/${i}/players/${myPlayerId}`);
+                    await set(oldRef, null);
+                }
             }
+
+            const teamIndex = state.teams.findIndex(t => t.id === teamId);
+            let pNumber = 1;
+            if (state.teams[teamIndex].players) {
+                const nums = Object.values(state.teams[teamIndex].players).map(p => p.num || 0);
+                pNumber = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+            }
+
+            const playerRef = ref(db, `rooms/${turnManager.roomRef.key}/teams/${teamIndex}/players/${myPlayerId}`);
+            await onDisconnect(playerRef).remove();
+            await set(playerRef, { num: pNumber, active: true });
+            
+            myTeamId = teamId;
+            myPlayerNumber = pNumber;
+            updatePlayerInfoDisplay();
         };
+
+        window.setDifficulty = function(level) {
+            if(!turnManager || !turnManager.currentState) return;
+            if(turnManager.currentState.adminId !== myPlayerId) return; // רק מנהל קובע
+            update(turnManager.roomRef, { difficulty: level });
+        };
+
+        window.startGame = function() {
+            if(!myTeamId) { alert("אנא בחר קבוצה קודם!"); return; }
+            update(turnManager.roomRef, { gameStarted: true });
+        };
+
+        window.openSettings = function() {
+            isEditMode = true;
+            uiModal.classList.remove('hidden');
+            document.getElementById('admin-setup-controls').classList.add('hidden');
+            document.getElementById('admin-edit-controls').classList.remove('hidden');
+            document.getElementById('non-admin-msg').classList.add('hidden');
+            document.getElementById('team-selection-group').classList.add('hidden'); // מסתיר בחירת קבוצה בעריכה
+        };
+
+        window.closeModal = function() {
+            isEditMode = false;
+            uiModal.classList.add('hidden');
+        };
+
+        window.confirmSettings = async function() {
+            isEditMode = false;
+            uiModal.classList.add('hidden');
+            
+            let fullDeck = Array.from({length: cards.length}, (_, i) => i);
+            fullDeck = shuffleDeck(fullDeck);
+            
+            const state = turnManager.currentState;
+            let updates = {
+                deck: fullDeck,
+                currentCardIndex: fullDeck[0],
+                turnStatus: 'transitioning',
+                turnStartTime: null,
+                describerId: null,
+                lastDescriberId: null,
+                currentTeamIndex: 0,
+                gameStarted: true // ממשיכים ישירות למשחק מאופס
+            };
+            
+            // איפוס ניקוד קבוצות
+            state.teams.forEach((t, i) => {
+                updates[`teams/${i}/score`] = 0;
+            });
+            
+            await update(turnManager.roomRef, updates);
+        };
+
+        function updatePlayerInfoDisplay() {
+            if(myTeamId && myPlayerNumber) {
+                uiPlayerInfoDisplay.textContent = `קבוצה: ${teamNames[myTeamId]} | שחקן: ${myPlayerNumber}`;
+                uiPlayerInfoDisplay.style.backgroundColor = teamBgColors[myTeamId];
+                uiPlayerInfoDisplay.style.color = teamColors[myTeamId];
+                uiCardContainer.style.backgroundColor = teamBgColors[myTeamId]; // רקע הכרטיס
+            } else {
+                uiPlayerInfoDisplay.textContent = '';
+                uiPlayerInfoDisplay.style.backgroundColor = 'transparent';
+                uiCardContainer.style.backgroundColor = 'white';
+            }
+        }
 
         function updateBoardColors(teams) {
             for(let i=0; i<=MAX_STEPS; i++) {
@@ -833,10 +667,56 @@
         function setupTurnManagerEvents() {
             turnManager.events.onStateUpdate = (state) => {
                 
-                updateBoardColors(state.teams);
+                const isAdmin = (state.adminId === myPlayerId);
 
-                const activeTeamsCount = state.teams.filter(t => t.playerCount > 0).length;
-                const isSingleTeamMode = activeTeamsCount === 1;
+                // ניהול המודאל
+                if(state.gameStarted && !isEditMode) {
+                    uiModal.classList.add('hidden');
+                } else if (!state.gameStarted && !isEditMode) {
+                    uiModal.classList.remove('hidden');
+                    document.getElementById('team-selection-group').classList.remove('hidden');
+                    if(isAdmin) {
+                        document.getElementById('admin-setup-controls').classList.remove('hidden');
+                        document.getElementById('admin-edit-controls').classList.add('hidden');
+                        document.getElementById('non-admin-msg').classList.add('hidden');
+                    } else {
+                        document.getElementById('admin-setup-controls').classList.add('hidden');
+                        document.getElementById('admin-edit-controls').classList.add('hidden');
+                        document.getElementById('non-admin-msg').classList.remove('hidden');
+                    }
+                }
+
+                // סנכרון כפתורי רמת קושי
+                document.querySelectorAll('.diff-btn').forEach(btn => {
+                    btn.style.backgroundColor = '#f9f9f9';
+                    btn.style.borderColor = '#ddd';
+                    btn.style.color = '#666';
+                });
+                if(state.difficulty === 'easy') {
+                    const b = document.getElementById('diff-easy');
+                    b.style.backgroundColor = '#d5f5e3'; b.style.borderColor = '#2ecc71'; b.style.color = '#27ae60';
+                }
+                if(state.difficulty === 'medium') {
+                    const b = document.getElementById('diff-medium');
+                    b.style.backgroundColor = '#fcf3cf'; b.style.borderColor = '#f1c40f'; b.style.color = '#f39c12';
+                }
+                if(state.difficulty === 'hard') {
+                    const b = document.getElementById('diff-hard');
+                    b.style.backgroundColor = '#fadbd8'; b.style.borderColor = '#e74c3c'; b.style.color = '#c0392b';
+                }
+
+                // סנכרון כפתורי קבוצות
+                document.querySelectorAll('#modal-team-buttons .team-btn').forEach(btn => btn.style.border = '3px solid transparent');
+                if(myTeamId) {
+                    const activeBtn = document.querySelector(`#modal-team-buttons .team-btn.${myTeamId}`);
+                    if(activeBtn) activeBtn.style.border = '3px solid #333';
+                }
+
+                // כפתור הגדרות מוצג רק למנהל במהלך המשחק
+                if(isAdmin && state.gameStarted) document.getElementById('btn-settings').classList.remove('hidden');
+                else document.getElementById('btn-settings').classList.add('hidden');
+
+                updateBoardColors(state.teams);
 
                 let playersText = [];
                 state.teams.forEach(t => {
@@ -851,71 +731,60 @@
                     uiCardContainer.classList.add('hidden');
                     document.getElementById('controls').classList.add('hidden');
                     uiRoleMessage.classList.add('hidden');
-                    uiBtnStart.classList.add('hidden');
+                    uiBtnStartTurn.classList.add('hidden');
 
-                    if (localTimerInterval) {
-                        clearInterval(localTimerInterval);
-                        localTimerInterval = null;
-                    }
-                    
+                    if (localTimerInterval) { clearInterval(localTimerInterval); localTimerInterval = null; }
                     uiStatus.textContent = `🏆 קבוצת ${winnerTeam.name} ניצחה! 🏆`;
                     uiStatus.style.fontSize = "26px";
                     uiStatus.style.color = teamColors[winnerTeam.id];
-                    
-                    return; // אין כפתור יציאה – השחקנים יוכלו לצאת (לרענן/לסגור) ואז החדר יתאפס לבד לפעם הבאה.
+                    return; 
                 }
 
+                if(!state.gameStarted) return; // לא מעדכנים תור אם לא התחיל
+
                 const currentTeam = state.teams[state.currentTeamIndex];
+                const activeTeamsCount = state.teams.filter(t => t.playerCount > 0).length;
+                const isSingleTeamMode = activeTeamsCount === 1;
 
                 if (state.turnStatus === 'active') {
                     if (!localTimerInterval) {
                         localTimerInterval = setInterval(() => {
                             if (!turnManager.currentState || turnManager.currentState.turnStatus !== 'active') {
-                                clearInterval(localTimerInterval);
-                                localTimerInterval = null;
-                                return;
+                                clearInterval(localTimerInterval); localTimerInterval = null; return;
                             }
-                            
                             let elapsed = Math.floor((Date.now() - turnManager.currentState.turnStartTime) / 1000);
                             let timeLeft = turnManager.currentState.turnDuration - elapsed;
-                            
                             if (timeLeft <= 0) {
                                 timeLeft = 0;
-                                if (turnManager.currentState.describerId === myPlayerId) {
-                                    turnManager.endTurn();
-                                }
+                                if (turnManager.currentState.describerId === myPlayerId) turnManager.endTurn();
                             }
-                            
                             uiTimer.textContent = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
                         }, 250); 
                     }
                 } else {
-                    if (localTimerInterval) {
-                        clearInterval(localTimerInterval);
-                        localTimerInterval = null;
-                    }
+                    if (localTimerInterval) { clearInterval(localTimerInterval); localTimerInterval = null; }
                     uiTimer.textContent = `00:${state.turnDuration}`;
                 }
 
                 if (state.turnStatus === 'active') {
-                    uiBtnStart.classList.add('hidden');
+                    uiBtnStartTurn.classList.add('hidden');
                     uiStatus.style.fontSize = "16px";
                     uiStatus.textContent = `משחקים: קבוצת ${currentTeam.name}!`;
                     uiStatus.style.color = teamColors[currentTeam.id];
 
-                    if (turnManager.myTeamId !== currentTeam.id) {
+                    if (myTeamId !== currentTeam.id) {
                         uiRoleMessage.classList.add('hidden');
                         uiCardContainer.classList.remove('hidden');
                         document.getElementById('controls').classList.add('hidden');
                         uiCardRoleTitle.textContent = "👁️ מצב פיקוח: ודאו שהם לא אומרים את המילים!";
-                        loadCardIfNeeded(state.currentCardIndex);
+                        loadCardIfNeeded(state.currentCardIndex, state.difficulty);
                     } else {
                         if (state.describerId === myPlayerId) {
                             uiRoleMessage.classList.add('hidden');
                             uiCardContainer.classList.remove('hidden');
                             document.getElementById('controls').classList.remove('hidden');
                             uiCardRoleTitle.textContent = "🗣️ אתה המתאר! תן רמזים לקבוצה שלך";
-                            loadCardIfNeeded(state.currentCardIndex);
+                            loadCardIfNeeded(state.currentCardIndex, state.difficulty);
                         } else {
                             uiCardContainer.classList.add('hidden');
                             document.getElementById('controls').classList.add('hidden');
@@ -933,26 +802,25 @@
                         uiStatus.textContent = "הזמן נגמר! מסכמים את התור...";
                         uiStatus.style.fontSize = "18px";
                         uiStatus.style.color = "#e74c3c";
-                        uiBtnStart.classList.add('hidden');
+                        uiBtnStartTurn.classList.add('hidden');
                     } else {
-                        if (turnManager.myTeamId === currentTeam.id) {
+                        if (myTeamId === currentTeam.id) {
                             let canStart = true;
                             if (isSingleTeamMode && currentTeam.playerCount > 1 && state.lastDescriberId === myPlayerId) {
                                 canStart = false; 
                             }
-                            
                             if (canStart) {
-                                uiBtnStart.classList.remove('hidden');
-                                uiBtnStart.textContent = `התחל תור לקבוצה שלך (${currentTeam.name})`;
+                                uiBtnStartTurn.classList.remove('hidden');
+                                uiBtnStartTurn.textContent = `התחל משחק`; // הפירוט שביקשת
                             } else {
-                                uiBtnStart.classList.add('hidden');
+                                uiBtnStartTurn.classList.add('hidden');
                                 uiStatus.textContent = `📢 ממתינים שחבר קבוצה אחר יתחיל את התור...`;
                             }
                         } else {
-                            uiBtnStart.classList.add('hidden');
+                            uiBtnStartTurn.classList.add('hidden');
                         }
                         
-                        if (uiBtnStart.classList.contains('hidden') === false || turnManager.myTeamId !== currentTeam.id) {
+                        if (uiBtnStartTurn.classList.contains('hidden') === false || myTeamId !== currentTeam.id) {
                             uiStatus.textContent = `📢 עכשיו התור של קבוצת ${currentTeam.name}!`;
                         }
                         uiStatus.style.fontSize = "20px";
@@ -962,7 +830,7 @@
             };
         }
 
-        uiBtnStart.addEventListener('click', () => {
+        uiBtnStartTurn.addEventListener('click', () => {
             if (turnManager) turnManager.startTurn();
         });
 
@@ -975,7 +843,7 @@
         });
 
         let fadeTimeout;
-        function loadCardIfNeeded(index) {
+        function loadCardIfNeeded(index, difficultyLevel) {
             if (index === lastDisplayedCardIndex) return;
             lastDisplayedCardIndex = index;
 
@@ -989,9 +857,16 @@
                 document.getElementById('main-word').textContent = card.word;
                 document.getElementById('card-icon').textContent = card.icon || "🖼️";
 
+                // חיתוך המילים לפי רמת הקושי
+                let wordsLimit = 4; // ברירת מחדל בינוני
+                if(difficultyLevel === 'easy') wordsLimit = 2;
+                if(difficultyLevel === 'hard') wordsLimit = 6;
+
+                const wordsToShow = card.taboo.slice(0, wordsLimit);
+
                 const uiTabooWords = document.getElementById('taboo-words');
                 uiTabooWords.innerHTML = '';
-                card.taboo.forEach(word => {
+                wordsToShow.forEach(word => {
                     const li = document.createElement('li');
                     li.textContent = word;
                     uiTabooWords.appendChild(li);
