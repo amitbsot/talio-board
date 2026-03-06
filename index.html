@@ -19,25 +19,26 @@
             touch-action: manipulation; /* מניעת זום בלחיצה כפולה בנייד */
         }
 
-        /* --- מסך לובי כניסה --- */
+                /* --- מסך לובי כניסה --- */
         #lobby {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
             background-color: rgba(253, 251, 247, 0.98);
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; /* הצמדה לחלק העליון */
+            justify-content: flex-start; /* שומר על האלמנטים למעלה */
             align-items: center;
-            padding-top: 10vh; /* ריווח מהלמעלה */
+            padding-top: 5vh; /* <--- הריווח הוקטן מ-15 ל-5 כדי לדחוף הכל למעלה */
             z-index: 100;
         }
+
 
         .room-input {
             width: 80%;
             max-width: 300px;
             padding: 15px;
             font-size: 20px;
-            margin-top: 20vh;
+            margin-top: 25px;
             border: 2px solid #dcd5c6;
             border-radius: 12px;
             text-align: center;
