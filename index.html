@@ -1,1 +1,936 @@
-משחקים: קבוצת צהוב!
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Talio-board - משחק משפחתי</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fdfbf7; 
+            color: #4a4a4a; 
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-y: auto; 
+            overflow-x: hidden; /* ביטול גלילה אופקית */
+            touch-action: manipulation; /* מניעת זום בלחיצה כפולה בנייד */
+        }
+
+        /* --- מסך לובי כניסה --- */
+        #lobby {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(253, 251, 247, 0.98);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* הצמדה לחלק העליון */
+            align-items: center;
+            padding-top: 15vh; /* ריווח מהלמעלה */
+            z-index: 100;
+        }
+
+        .room-input {
+            width: 80%;
+            max-width: 300px;
+            padding: 15px;
+            font-size: 20px;
+            margin-bottom: 25px;
+            border: 2px solid #dcd5c6;
+            border-radius: 12px;
+            text-align: center;
+            background-color: #fff;
+            color: #333;
+        }
+
+        .btn-join-room {
+            background-color: #3498DB;
+            color: white;
+            padding: 15px 30px;
+            font-size: 22px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #2980B9;
+            transition: transform 0.1s;
+        }
+        .btn-join-room:active { transform: translateY(4px); box-shadow: none; }
+
+        /* --- חלון הגדרות מודאלי --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 200;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .settings-group { margin-bottom: 20px; }
+        .settings-group h4 { margin: 0 0 10px 0; color: #555; font-size: 18px; }
+
+        .diff-buttons { display: flex; gap: 8px; justify-content: center; }
+        .diff-btn {
+            flex: 1; padding: 10px; font-size: 16px; font-weight: bold;
+            border-radius: 10px; border: 2px solid #ddd; cursor: pointer;
+            background-color: #f9f9f9; color: #666; transition: all 0.2s;
+        }
+
+        #modal-team-buttons {
+            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+        }
+        .team-btn {
+            padding: 12px 15px; font-size: 16px; border-radius: 10px;
+            border: 3px solid transparent; cursor: pointer; font-weight: bold;
+            transition: all 0.2s;
+        }
+        .team-btn.blue { background-color: #D6EAF8; color: #2874A6; }
+        .team-btn.red { background-color: #FADBD8; color: #943126; }
+        .team-btn.purple { background-color: #E8DAEF; color: #6C3483; }
+        .team-btn.green { background-color: #D5F5E3; color: #1E8449; }
+        .team-btn.yellow { background-color: #FCF3CF; color: #B7950B; }
+
+        /* --- הלוח המשותף --- */
+        #shared-board {
+            background-color: #f4f1ea;
+            padding: 15px 10px;
+            text-align: center;
+            border-bottom: 3px solid #e0dcd3;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .game-title {
+            font-size: 26px; font-weight: 900; color: #f39c12;
+            letter-spacing: 1px; margin-bottom: 5px; text-align: left; flex:1;
+        }
+
+        .board-grid {
+            display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
+            margin: 10px auto; max-width: 600px; padding: 10px;
+            background-color: #ffffff; border-radius: 12px; border: 2px solid #e0dcd3;
+        }
+
+        .square {
+            width: 35px; height: 35px; background-color: #faf9f5;
+            border: 1px solid #ece8e0; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; color: #aaa; font-weight: bold;
+        }
+        .square.finish { border: 2px solid #f39c12; color: #f39c12; background-color: #fef9e7; }
+
+        .top-info {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 5px; padding: 0 10px;
+        }
+
+        #timer { font-size: 40px; font-weight: bold; color: #e74c3c; margin-top: 5px; }
+
+        /* --- האזור האישי --- */
+        #personal-area {
+            padding: 20px 10px 40px 10px; flex: 1; display: flex;
+            flex-direction: column; align-items: center; justify-content: flex-start;
+        }
+
+        .card {
+            background-color: white; color: #333;
+            width: 90%; max-width: 350px; border-radius: 20px;
+            padding: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            margin-bottom: 20px; margin-top: 10px; border: 1px solid #f0f0f0;
+            transition: opacity 0.3s ease, background-color 0.4s ease;
+        }
+
+        .fade-out { opacity: 0 !important; }
+
+        #card-role-title {
+            font-size: 18px; font-weight: bold; color: #444; margin-bottom: 15px;
+            background-color: rgba(255,255,255,0.7); padding: 8px;
+            border-radius: 8px; border: 1px dashed #ccc;
+        }
+
+        .main-word-container {
+            display: flex; align-items: center; justify-content: center; gap: 15px;
+            margin-bottom: 10px; border-bottom: 2px dashed rgba(0,0,0,0.1); padding-bottom: 10px;
+        }
+
+        .main-word { font-size: 32px; font-weight: 900; color: #2c3e50; }
+        .card-icon { font-size: 40px; }
+        .taboo-list { list-style: none; padding: 0; margin: 0; font-size: 20px; color: #c0392b; font-weight: bold; }
+        .taboo-list li { margin: 8px 0; }
+
+        .controls { display: flex; width: 95%; max-width: 400px; gap: 15px; }
+        button.action-btn {
+            flex: 1; padding: 18px 10px; font-size: 20px; font-weight: bold;
+            border: none; border-radius: 12px; cursor: pointer; color: #333;
+        }
+        .btn-correct { background-color: #A9DFBF; box-shadow: 0 4px 0 #7DCEA0;}
+        .btn-skip { background-color: #F5B7B1; box-shadow: 0 4px 0 #F1948A;}
+        
+        .btn-start { 
+            background-color: #A9DFBF;
+            color: #1E8449; 
+            width: 90%; max-width: 350px; margin-top: 20px; 
+            box-shadow: 0 4px 0 #7DCEA0; 
+            border:none; padding: 18px; font-size: 22px; font-weight: bold; 
+            border-radius: 12px; cursor: pointer; transition: all 0.1s;
+        }
+        .btn-start:active { transform: translateY(4px); box-shadow: none; }
+
+        .hidden { display: none !important; }
+
+        .message-box {
+            background-color: #e8f8f5; color: #117a65; padding: 15px;
+            border-radius: 10px; text-align: center; font-size: 18px; font-weight: bold;
+            width: 90%; max-width: 350px; margin-top: 20px; border: 1px solid #d1f2eb;
+        }
+
+        .players-count { font-size: 14px; color: #7f8c8d; margin-bottom: 10px; font-weight: bold;}
+
+        @media (max-width: 400px) {
+            .square { width: 28px; height: 28px; font-size: 10px; border-radius: 6px; }
+            .game-title { font-size: 22px; }
+            .btn-start { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="lobby">
+        <h1 class="game-title" style="font-size: 42px; margin-bottom: 10px; text-align: center;">TALIO-BOARD</h1>
+        <h3 style="margin-bottom: 20px; color: #777;">הכנס שם חדר להתחלה:</h3>
+        <input type="text" id="room-input" class="room-input" placeholder="שם החדר (למשל: משפחת כהן)">
+        <button class="btn-join-room" onclick="enterRoom()">היכנס לחדר</button>
+    </div>
+
+    <div id="setup-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modal-title">הגדרות חדר</h2>
+            
+            <div class="settings-group">
+                <h4>רמת קושי</h4>
+                <div class="diff-buttons">
+                    <button class="diff-btn" id="diff-easy" onclick="setDifficulty('easy')">קל</button>
+                    <button class="diff-btn" id="diff-medium" onclick="setDifficulty('medium')">בינוני</button>
+                    <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">קשה</button>
+                </div>
+            </div>
+
+            <div class="settings-group" id="team-selection-group">
+                <h4>בחירת קבוצה</h4>
+                <div id="modal-team-buttons">
+                    <button class="team-btn small blue" onclick="selectTeam('blue')">תכלת</button>
+                    <button class="team-btn small red" onclick="selectTeam('red')">ורודה</button>
+                    <button class="team-btn small purple" onclick="selectTeam('purple')">סגולה</button>
+                    <button class="team-btn small green" onclick="selectTeam('green')">ירוקה</button>
+                    <button class="team-btn small yellow" onclick="selectTeam('yellow')">צהובה</button>
+                </div>
+            </div>
+            
+            <div id="admin-setup-controls" class="hidden">
+                <button id="btn-modal-start" class="btn-start" style="width:100%; margin-top:10px;" onclick="startGame()">התחל משחק</button>
+            </div>
+            
+            <div id="admin-edit-controls" class="hidden">
+                <button id="btn-change-teams" style="width:100%; margin-bottom: 15px; padding:12px; border-radius:12px; border:2px solid #e67e22; background:#fdf2e9; color:#d35400; font-weight:bold; cursor:pointer;" onclick="restartToTeamSelection()">החלפת קבוצות (התחל מחדש)</button>
+                <p id="edit-warning" style="color:#e74c3c; font-size:14px; font-weight:bold; margin-bottom: 15px;">שינוי הגדרות יתחיל את המשחק מחדש</p>
+                <div style="display:flex; gap:10px;">
+                    <button id="btn-modal-confirm" class="btn-start" style="flex:1; margin-top:0;" onclick="confirmSettings()">אישור</button>
+                    <button id="btn-modal-cancel" style="flex:1; padding:18px; border-radius:12px; border:2px solid #ccc; background:#eee; font-weight:bold; cursor:pointer;" onclick="closeModal()">ביטול</button>
+                </div>
+            </div>
+
+            <div id="non-admin-msg" class="hidden" style="margin-top:20px; color:#777; font-weight:bold; font-size: 16px;">
+                ממתין למנהל החדר שיתחיל את המשחק...
+            </div>
+        </div>
+    </div>
+
+    <div id="shared-board">
+        <div class="top-info">
+            <div style="display:flex; gap:10px; align-items:flex-start; flex: 2;">
+                <button id="btn-settings" class="hidden" style="font-size: 24px; background: none; border: none; cursor: pointer; padding: 0;" onclick="openSettings()">⚙️</button>
+                
+                <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                    <div id="player-info-display" style="font-size: 14px; font-weight: bold; padding: 5px 10px; border-radius: 8px; transition: all 0.3s;"></div>
+                </div>
+            </div>
+            <div class="game-title">TALIO</div>
+        </div>
+        
+        <div id="players-count" class="players-count">ממתין לשחקנים...</div>
+        <div class="board-grid" id="board-grid"></div>
+
+        <div id="timer">01:00</div>
+        <div id="status" style="margin-top:5px; color:#888; font-weight:bold; transition: font-size 0.3s;">ממתין לשחקנים...</div>
+    </div>
+
+    <div id="personal-area">
+        <button id="btn-start-turn" class="btn-start hidden">התחל משחק</button>
+
+        <div id="role-message" class="message-box hidden"></div>
+
+        <div id="card-container" class="card hidden">
+            <div id="card-role-title"></div>
+            
+            <div class="main-word-container">
+                <span id="card-icon" class="card-icon">🖼️</span>
+                <span class="main-word" id="main-word">מילה</span>
+            </div>
+            
+            <ul class="taboo-list" id="taboo-words"></ul>
+        </div>
+
+        <div id="controls" class="controls hidden">
+            <button id="btn-skip" class="action-btn btn-skip">פס / דילוג</button>
+            <button id="btn-correct" class="action-btn btn-correct">הצליחו!</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, get, onDisconnect } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDiGUmCG08Ke6JYYR_gW6r-JMwdxt0aJDk",
+            authDomain: "talio-board.firebaseapp.com",
+            databaseURL: "https://talio-board-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "talio-board"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const myPlayerId = Math.random().toString(36).substring(2, 10); 
+        let turnManager = null;
+        let localTimerInterval = null;
+        let lastDisplayedCardIndex = -1;
+        let myTeamId = null;
+        let myPlayerNumber = null;
+        let isEditMode = false;
+        let pendingDifficulty = 'medium'; // שמירת בחירה זמנית לפני אישור
+
+        const MAX_STEPS = 30;
+        const boardGrid = document.getElementById('board-grid');
+        for(let i = 0; i <= MAX_STEPS; i++) {
+            let sq = document.createElement('div');
+            sq.className = 'square';
+            sq.id = 'sq-' + i;
+            if(i === 0) sq.innerText = 'התחלה';
+            else if(i === MAX_STEPS) { sq.innerText = 'סיום'; sq.classList.add('finish'); }
+            else sq.innerText = i;
+            boardGrid.appendChild(sq);
+        }
+
+        const teamColors = { 'blue': '#2874A6', 'red': '#943126', 'purple': '#6C3483', 'green': '#1E8449', 'yellow': '#B7950B' };
+        const teamBgColors = { 'blue': '#D6EAF8', 'red': '#FADBD8', 'purple': '#E8DAEF', 'green': '#D5F5E3', 'yellow': '#FCF3CF' };
+        const teamNames = { 'blue': 'תכלת', 'red': 'ורודה', 'purple': 'סגולה', 'green': 'ירוקה', 'yellow': 'צהובה' };
+        // שמות תקינים דקדוקית
+        const teamGrammarNames = { 'blue': 'תכלת', 'red': 'ורודה', 'purple': 'סגולה', 'green': 'ירוקה', 'yellow': 'צהובה' };
+
+        const cards = [
+            {"word":"כלב", "icon":"🐶", "taboo":["חיה","נבחן","חתול","עצם","רצועה","זנב"]},
+            {"word":"שמש", "icon":"☀️", "taboo":["יום","אור","חם","שמיים","צהוב","כוכב"]},
+            {"word":"אופניים", "icon":"🚲", "taboo":["גלגלים","לרכוב","פדלים","קסדה","כביש","כידון"]},
+            {"word":"פיצה", "icon":"🍕", "taboo":["איטליה","גבינה","אוכל","משלוח","משולש","בצק"]},
+            {"word":"ים", "icon":"🌊", "taboo":["מים","חול","גלים","קיץ","מטקות","מלח"]},
+            {"word":"מחשב", "icon":"💻", "taboo":["מקלדת","עכבר","מסך","אינטרנט","לעבוד","לפטופ"]},
+            {"word":"טיסה", "icon":"✈️", "taboo":["מטוס","שדה תעופה","חו''ל","כרטיס","כנפיים","דיילת"]},
+            {"word":"ירושלים", "icon":"🕍", "taboo":["עיר","בירה","כותל","קודש","זהב","מקדש"]},
+            {"word":"כדורגל", "icon":"⚽", "taboo":["מגרש","שער","מסי","ספורט","לבעוט","שופט"]},
+            {"word":"פלאפון", "icon":"📱", "taboo":["מסך","להתקשר","סוללה","אפל","מטען","אפליקציה"]},
+            {"word":"קפה", "icon":"☕", "taboo":["בוקר","לשתות","חלב","ספל","הפוך","קפאין"]},
+            {"word":"מיטה", "icon":"🛏️", "taboo":["לישון","שמיכה","כרית","לילה","מזרן","חלום"]},
+            {"word":"רכבת", "icon":"🚆", "taboo":["פסים","תחנה","קרון","כרטיס","לנסוע","קטר"]},
+            {"word":"מורה", "icon":"👩‍🏫", "taboo":["בית ספר","תלמידים","כיתה","לוח","ללמד","מבחן"]},
+            {"word":"סרט", "icon":"🎬", "taboo":["קולנוע","פופקורן","לראות","שחקן","טלוויזיה","במאי"]},
+            {"word":"חורף", "icon":"🌧️", "taboo":["קר","גשם","מטריה","עונה","מעיל","שלג"]},
+            {"word":"גיטרה", "icon":"🎸", "taboo":["לנגן","מיתרים","כלי","מוזיקה","חשמלית","מפרט"]},
+            {"word":"רופא", "icon":"👨‍⚕️", "taboo":["חולה","בית חולים","תרופה","מרפאה","בריאות","סטטוסקופ"]},
+            {"word":"שוקולד", "icon":"🍫", "taboo":["מתוק","קקאו","חום","פרה","טעים","חפיסה"]},
+            {"word":"שעון", "icon":"⌚", "taboo":["זמן","מחוגים","יד","שעה","לענוד","מעורר"]},
+            {"word":"חתול", "icon":"🐱", "taboo":["מיאו","כלב","חיה","שפם","זנב","פח"]}
+        ];
+
+        function shuffleDeck(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        class GameTurnManager {
+            constructor(roomRef, playerId) {
+                this.roomRef = roomRef;
+                this.playerId = playerId;
+                this.currentState = null;
+                this.events = { onStateUpdate: (state) => {} };
+            }
+
+            async initializeRoom() {
+                let fullDeck = Array.from({length: cards.length}, (_, i) => i);
+                fullDeck = shuffleDeck(fullDeck);
+
+                const initialState = {
+                    adminId: this.playerId,
+                    gameStarted: false,
+                    difficulty: 'medium',
+                    teams: [
+                        { id: 'blue', name: 'תכלת', players: {}, score: 0 },
+                        { id: 'red', name: 'ורוד', players: {}, score: 0 },
+                        { id: 'purple', name: 'סגול', players: {}, score: 0 },
+                        { id: 'green', name: 'ירוק', players: {}, score: 0 },
+                        { id: 'yellow', name: 'צהוב', players: {}, score: 0 }
+                    ],
+                    currentTeamIndex: 0, 
+                    turnStatus: 'transitioning', 
+                    turnStartTime: null,
+                    turnDuration: 60,
+                    deck: fullDeck,
+                    currentCardIndex: fullDeck[0],
+                    describerId: null,
+                    lastDescriberId: null
+                };
+                await set(this.roomRef, initialState);
+            }
+
+            async connect() {
+                const snapshot = await get(this.roomRef);
+                let state = snapshot.val();
+                let totalActivePlayers = 0;
+                if (state && state.teams) {
+                    state.teams.forEach(t => { if (t.players) totalActivePlayers += Object.keys(t.players).length; });
+                }
+                if (!snapshot.exists() || totalActivePlayers === 0) {
+                    await this.initializeRoom();
+                }
+            }
+
+            listenToState() {
+                onValue(this.roomRef, (snapshot) => {
+                    const newState = snapshot.val();
+                    if (!newState) { window.location.reload(); return; }
+
+                    this.currentState = newState;
+                    
+                    // בדיקת העברת מנהל חדר
+                    let allPlayers = [];
+                    newState.teams.forEach(team => {
+                        team.playerCount = team.players ? Object.keys(team.players).length : 0;
+                        if (team.players) {
+                            Object.keys(team.players).forEach(pid => {
+                                allPlayers.push({ id: pid, joinTime: team.players[pid].joinTime || 0 });
+                            });
+                        }
+                    });
+
+                    // אם יש שחקנים והמנהל לא מחובר לאף קבוצה
+                    if (allPlayers.length > 0 && !allPlayers.find(p => p.id === newState.adminId)) {
+                        // מיון לפי זמן הצטרפות, הישן ביותר מקבל ניהול
+                        allPlayers.sort((a, b) => a.joinTime - b.joinTime);
+                        if (allPlayers[0].id === this.playerId) {
+                            update(this.roomRef, { adminId: this.playerId });
+                            return; // יחזור בסיבוב הבא
+                        }
+                    }
+
+                    const activeTeams = newState.teams.filter(t => t.playerCount > 0);
+                    if (newState.turnStatus === 'transitioning' && activeTeams.length > 0 && newState.teams[newState.currentTeamIndex].playerCount === 0) {
+                        let nextIdx = newState.currentTeamIndex;
+                        for(let i=1; i<newState.teams.length; i++) {
+                            let testIdx = (newState.currentTeamIndex + i) % newState.teams.length;
+                            if (newState.teams[testIdx].playerCount > 0) {
+                                nextIdx = testIdx; break;
+                            }
+                        }
+                        if (nextIdx !== newState.currentTeamIndex) {
+                            update(this.roomRef, { currentTeamIndex: nextIdx });
+                            return; 
+                        }
+                    }
+
+                    this.events.onStateUpdate(this.currentState);
+                });
+            }
+
+            async startTurn() {
+                if (!this.currentState) return;
+                await update(this.roomRef, { turnStatus: 'active', turnStartTime: Date.now(), describerId: this.playerId });
+            }
+
+            async endTurn() {
+                const state = this.currentState;
+                if (!state || state.turnStatus !== 'active') return;
+
+                let nextTeamIndex = state.currentTeamIndex;
+                for(let i=1; i<=state.teams.length; i++) {
+                    let testIndex = (state.currentTeamIndex + i) % state.teams.length;
+                    if(state.teams[testIndex].players && Object.keys(state.teams[testIndex].players).length > 0) {
+                        nextTeamIndex = testIndex; break;
+                    }
+                }
+
+                await update(this.roomRef, { turnStatus: 'ended', lastDescriberId: state.describerId });
+                setTimeout(async () => {
+                    await update(this.roomRef, { currentTeamIndex: nextTeamIndex, turnStatus: 'transitioning', turnStartTime: null, describerId: null });
+                }, 3000); 
+            }
+
+            async drawCard(isCorrect) {
+                const state = this.currentState;
+                const activeTeam = state.teams[state.currentTeamIndex];
+                if (state.turnStatus !== 'active' || state.describerId !== this.playerId) return;
+
+                let deck = state.deck || [];
+                deck.shift(); 
+                if (deck.length === 0) {
+                    deck = Array.from({length: cards.length}, (_, i) => i);
+                    deck = shuffleDeck(deck);
+                }
+
+                let updates = { deck: deck, currentCardIndex: deck[0] };
+                if (isCorrect) updates[`teams/${state.currentTeamIndex}/score`] = activeTeam.score + 1;
+                await update(this.roomRef, updates);
+            }
+        }
+
+        const uiLobby = document.getElementById('lobby');
+        const uiModal = document.getElementById('setup-modal');
+        const uiTimer = document.getElementById('timer');
+        const uiStatus = document.getElementById('status');
+        const uiCardContainer = document.getElementById('card-container');
+        const uiBtnStartTurn = document.getElementById('btn-start-turn');
+        const uiRoleMessage = document.getElementById('role-message');
+        const uiCardRoleTitle = document.getElementById('card-role-title');
+        const uiPlayersCount = document.getElementById('players-count');
+        const uiPlayerInfoDisplay = document.getElementById('player-info-display');
+
+        window.enterRoom = async function() {
+            const roomId = document.getElementById('room-input').value.trim();
+            if(!roomId) { alert("אנא הכנס שם חדר!"); return; }
+
+            uiLobby.style.display = 'none';
+            const roomRef = ref(db, 'rooms/' + roomId);
+            turnManager = new GameTurnManager(roomRef, myPlayerId);
+            
+            await turnManager.connect();
+            setupTurnManagerEvents();
+            turnManager.listenToState();
+        };
+
+        window.selectTeam = async function(teamId) {
+            if(!turnManager || !turnManager.currentState) return;
+            if(myTeamId === teamId) return; // לא מעלה מספר אם כבר באותה קבוצה
+
+            const state = turnManager.currentState;
+            
+            for(let i=0; i<state.teams.length; i++) {
+                if(state.teams[i].players && state.teams[i].players[myPlayerId]) {
+                    const oldRef = ref(db, `rooms/${turnManager.roomRef.key}/teams/${i}/players/${myPlayerId}`);
+                    await set(oldRef, null);
+                }
+            }
+
+            const teamIndex = state.teams.findIndex(t => t.id === teamId);
+            let pNumber = 1;
+            if (state.teams[teamIndex].players) {
+                const nums = Object.values(state.teams[teamIndex].players).map(p => p.num || 0);
+                pNumber = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+            }
+
+            const playerRef = ref(db, `rooms/${turnManager.roomRef.key}/teams/${teamIndex}/players/${myPlayerId}`);
+            await onDisconnect(playerRef).remove();
+            await set(playerRef, { num: pNumber, active: true, joinTime: Date.now() });
+            
+            myTeamId = teamId;
+            myPlayerNumber = pNumber;
+            updatePlayerInfoDisplay();
+
+            // עדכון חזותי מיידי של המסגרת
+            document.querySelectorAll('#modal-team-buttons .team-btn').forEach(btn => btn.style.border = '3px solid transparent');
+            const activeBtn = document.querySelector(`#modal-team-buttons .team-btn.${myTeamId}`);
+            if(activeBtn) activeBtn.style.border = '3px solid #333';
+        };
+
+        window.setDifficulty = function(level) {
+            if(!turnManager || !turnManager.currentState) return;
+            if(turnManager.currentState.adminId !== myPlayerId) return; // רק מנהל יכול ללחוץ
+            pendingDifficulty = level;
+            updateDifficultyUI(level);
+        };
+
+        function updateDifficultyUI(level) {
+            const isAdmin = (turnManager && turnManager.currentState && turnManager.currentState.adminId === myPlayerId);
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.style.backgroundColor = '#f9f9f9';
+                btn.style.borderColor = '#ddd';
+                btn.style.color = '#666';
+                if (!isAdmin) {
+                    btn.style.opacity = '0.6';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                }
+            });
+            if(level === 'easy') {
+                const b = document.getElementById('diff-easy');
+                b.style.backgroundColor = '#d5f5e3'; b.style.borderColor = '#2ecc71'; b.style.color = '#27ae60';
+            }
+            if(level === 'medium') {
+                const b = document.getElementById('diff-medium');
+                b.style.backgroundColor = '#fcf3cf'; b.style.borderColor = '#f1c40f'; b.style.color = '#f39c12';
+            }
+            if(level === 'hard') {
+                const b = document.getElementById('diff-hard');
+                b.style.backgroundColor = '#fadbd8'; b.style.borderColor = '#e74c3c'; b.style.color = '#c0392b';
+            }
+        }
+
+        window.startGame = function() {
+            if(!myTeamId) { alert("אנא בחר קבוצה קודם!"); return; }
+            update(turnManager.roomRef, { gameStarted: true });
+        };
+
+        window.openSettings = function() {
+            if(!turnManager || !turnManager.currentState) return;
+            isEditMode = true;
+            pendingDifficulty = turnManager.currentState.difficulty;
+            updateDifficultyUI(pendingDifficulty);
+            
+            uiModal.classList.remove('hidden');
+            document.getElementById('admin-setup-controls').classList.add('hidden');
+            document.getElementById('admin-edit-controls').classList.remove('hidden');
+            document.getElementById('non-admin-msg').classList.add('hidden');
+            document.getElementById('team-selection-group').classList.add('hidden'); 
+
+            const isAdmin = (turnManager.currentState.adminId === myPlayerId);
+            if(isAdmin) {
+                document.getElementById('btn-change-teams').classList.remove('hidden');
+                document.getElementById('btn-modal-confirm').classList.remove('hidden');
+                document.getElementById('edit-warning').classList.remove('hidden');
+                document.getElementById('btn-modal-cancel').textContent = "ביטול";
+            } else {
+                document.getElementById('btn-change-teams').classList.add('hidden');
+                document.getElementById('btn-modal-confirm').classList.add('hidden');
+                document.getElementById('edit-warning').classList.add('hidden');
+                document.getElementById('btn-modal-cancel').textContent = "סגור";
+            }
+        };
+
+        window.closeModal = function() {
+            isEditMode = false;
+            uiModal.classList.add('hidden');
+            if(turnManager && turnManager.currentState) {
+                updateDifficultyUI(turnManager.currentState.difficulty);
+            }
+        };
+
+        window.confirmSettings = async function() {
+            if (turnManager.currentState.adminId !== myPlayerId) return;
+            isEditMode = false;
+            uiModal.classList.add('hidden');
+            
+            let fullDeck = Array.from({length: cards.length}, (_, i) => i);
+            fullDeck = shuffleDeck(fullDeck);
+            
+            const state = turnManager.currentState;
+            let updates = {
+                difficulty: pendingDifficulty,
+                deck: fullDeck,
+                currentCardIndex: fullDeck[0],
+                turnStatus: 'transitioning',
+                turnStartTime: null,
+                describerId: null,
+                lastDescriberId: null,
+                currentTeamIndex: 0,
+                gameStarted: true
+            };
+            
+            state.teams.forEach((t, i) => { updates[`teams/${i}/score`] = 0; });
+            await update(turnManager.roomRef, updates);
+        };
+
+        window.restartToTeamSelection = async function() {
+            if (turnManager.currentState.adminId !== myPlayerId) return;
+            isEditMode = false;
+            uiModal.classList.add('hidden');
+
+            const state = turnManager.currentState;
+            let updates = {
+                gameStarted: false,
+                turnStatus: 'transitioning',
+                turnStartTime: null,
+                describerId: null,
+                lastDescriberId: null,
+                currentTeamIndex: 0
+            };
+            state.teams.forEach((t, i) => { updates[`teams/${i}/score`] = 0; });
+            await update(turnManager.roomRef, updates);
+        };
+
+        function updatePlayerInfoDisplay() {
+            if(myTeamId && myPlayerNumber) {
+                let adminHTML = '';
+                if(turnManager && turnManager.currentState && turnManager.currentState.adminId === myPlayerId) {
+                    adminHTML = `<div style="color: #d4af37; font-size: 13px; font-weight: 900; margin-top: 3px; letter-spacing: 0.5px;">👑 מנהל חדר</div>`;
+                }
+                uiPlayerInfoDisplay.innerHTML = `קבוצה: ${teamNames[myTeamId]} | שחקן: ${myPlayerNumber}${adminHTML}`;
+                uiPlayerInfoDisplay.style.backgroundColor = teamBgColors[myTeamId];
+                uiPlayerInfoDisplay.style.color = teamColors[myTeamId];
+                uiCardContainer.style.backgroundColor = teamBgColors[myTeamId]; 
+            } else {
+                uiPlayerInfoDisplay.innerHTML = '';
+                uiPlayerInfoDisplay.style.backgroundColor = 'transparent';
+                uiCardContainer.style.backgroundColor = 'white';
+            }
+        }
+
+        function updateBoardColors(teams) {
+            for(let i=0; i<=MAX_STEPS; i++) {
+                let sq = document.getElementById('sq-' + i);
+                if(sq) sq.style.background = ''; 
+            }
+
+            let squaresMap = {};
+            teams.forEach(team => {
+                let currentScore = team.score || 0;
+                if(team.playerCount > 0) { // תמיד מציג את הקבוצה אם יש בה שחקנים (כולל התחלה 0)
+                    let pos = Math.min(currentScore, MAX_STEPS);
+                    if(!squaresMap[pos]) squaresMap[pos] = [];
+                    squaresMap[pos].push(teamBgColors[team.id]);
+                }
+            });
+
+            for(let pos in squaresMap) {
+                let sq = document.getElementById('sq-' + pos);
+                if(sq) {
+                    let colors = squaresMap[pos];
+                    if(colors.length === 1) {
+                        sq.style.background = colors[0];
+                    } else {
+                        let gradient = 'linear-gradient(to right, ';
+                        let step = 100 / colors.length;
+                        colors.forEach((c, i) => {
+                            gradient += `${c} ${i*step}%, ${c} ${(i+1)*step}%`;
+                            if(i < colors.length - 1) gradient += ', ';
+                        });
+                        gradient += ')';
+                        sq.style.background = gradient;
+                    }
+                }
+            }
+        }
+
+        function setupTurnManagerEvents() {
+            turnManager.events.onStateUpdate = (state) => {
+                
+                const isAdmin = (state.adminId === myPlayerId);
+                updatePlayerInfoDisplay(); // מעדכן טקסט מנהל במקרה של העברה
+
+                if(state.gameStarted && !isEditMode) {
+                    uiModal.classList.add('hidden');
+                } else if (!state.gameStarted && !isEditMode) {
+                    uiModal.classList.remove('hidden');
+                    document.getElementById('team-selection-group').classList.remove('hidden');
+                    if(isAdmin) {
+                        document.getElementById('admin-setup-controls').classList.remove('hidden');
+                        document.getElementById('admin-edit-controls').classList.add('hidden');
+                        document.getElementById('non-admin-msg').classList.add('hidden');
+                    } else {
+                        document.getElementById('admin-setup-controls').classList.add('hidden');
+                        document.getElementById('admin-edit-controls').classList.add('hidden');
+                        document.getElementById('non-admin-msg').classList.remove('hidden');
+                    }
+                }
+
+                updateDifficultyUI(isEditMode ? pendingDifficulty : state.difficulty);
+
+                document.querySelectorAll('#modal-team-buttons .team-btn').forEach(btn => btn.style.border = '3px solid transparent');
+                if(myTeamId) {
+                    const activeBtn = document.querySelector(`#modal-team-buttons .team-btn.${myTeamId}`);
+                    if(activeBtn) activeBtn.style.border = '3px solid #333';
+                }
+
+                if(state.gameStarted) document.getElementById('btn-settings').classList.remove('hidden');
+                else document.getElementById('btn-settings').classList.add('hidden');
+
+                updateBoardColors(state.teams);
+
+                let playersText = [];
+                state.teams.forEach(t => {
+                    if (t.playerCount > 0) playersText.push(`${t.name}: ${t.playerCount}`);
+                });
+                if(playersText.length > 0) {
+                    uiPlayersCount.textContent = `שחקנים מחוברים - ${playersText.join(' | ')}`;
+                } else {
+                    uiPlayersCount.textContent = "ממתין לשחקנים שיבחרו קבוצה...";
+                }
+
+                let winnerTeam = null;
+                state.teams.forEach(t => { if((t.score||0) >= MAX_STEPS) winnerTeam = t; });
+
+                if (winnerTeam) {
+                    uiCardContainer.classList.add('hidden');
+                    document.getElementById('controls').classList.add('hidden');
+                    uiRoleMessage.classList.add('hidden');
+                    uiBtnStartTurn.classList.add('hidden');
+
+                    if (localTimerInterval) { clearInterval(localTimerInterval); localTimerInterval = null; }
+                    uiStatus.textContent = `🏆 הקבוצה ה${teamGrammarNames[winnerTeam.id]} ניצחה! 🏆`;
+                    uiStatus.style.fontSize = "26px";
+                    uiStatus.style.color = teamColors[winnerTeam.id];
+                    return; 
+                }
+
+                if(!state.gameStarted) return; 
+
+                const currentTeam = state.teams[state.currentTeamIndex];
+                const activeTeamsCount = state.teams.filter(t => t.playerCount > 0).length;
+                const isSingleTeamMode = activeTeamsCount === 1;
+
+                if (state.turnStatus === 'active') {
+                    if (!localTimerInterval) {
+                        localTimerInterval = setInterval(() => {
+                            if (!turnManager.currentState || turnManager.currentState.turnStatus !== 'active') {
+                                clearInterval(localTimerInterval); localTimerInterval = null; return;
+                            }
+                            let elapsed = Math.floor((Date.now() - turnManager.currentState.turnStartTime) / 1000);
+                            let timeLeft = turnManager.currentState.turnDuration - elapsed;
+                            if (timeLeft <= 0) {
+                                timeLeft = 0;
+                                if (turnManager.currentState.describerId === myPlayerId) turnManager.endTurn();
+                            }
+                            uiTimer.textContent = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
+                        }, 250); 
+                    }
+                } else {
+                    if (localTimerInterval) { clearInterval(localTimerInterval); localTimerInterval = null; }
+                    uiTimer.textContent = `00:${state.turnDuration}`;
+                }
+
+                if (state.turnStatus === 'active') {
+                    uiBtnStartTurn.classList.add('hidden');
+                    uiStatus.style.fontSize = "16px";
+                    uiStatus.textContent = `משחקים: הקבוצה ה${teamGrammarNames[currentTeam.id]}!`;
+                    uiStatus.style.color = teamColors[currentTeam.id];
+
+                    if (myTeamId !== currentTeam.id) {
+                        uiRoleMessage.classList.add('hidden');
+                        uiCardContainer.classList.remove('hidden');
+                        document.getElementById('controls').classList.add('hidden');
+                        uiCardRoleTitle.textContent = "👁️ מצב פיקוח: ודאו שהם לא אומרים את המילים!";
+                        loadCardIfNeeded(state.currentCardIndex, state.difficulty);
+                    } else {
+                        if (state.describerId === myPlayerId) {
+                            uiRoleMessage.classList.add('hidden');
+                            uiCardContainer.classList.remove('hidden');
+                            document.getElementById('controls').classList.remove('hidden');
+                            uiCardRoleTitle.textContent = "🗣️ אתה המתאר! תן רמזים לקבוצה שלך";
+                            loadCardIfNeeded(state.currentCardIndex, state.difficulty);
+                        } else {
+                            uiCardContainer.classList.add('hidden');
+                            document.getElementById('controls').classList.add('hidden');
+                            uiRoleMessage.classList.remove('hidden');
+                            uiRoleMessage.textContent = "🧠 התור שלכם! חבר קבוצה מתאר את המילה, נחשו מהי!";
+                        }
+                    }
+                } else {
+                    uiCardContainer.classList.add('hidden');
+                    document.getElementById('controls').classList.add('hidden');
+                    uiRoleMessage.classList.add('hidden');
+                    lastDisplayedCardIndex = -1;
+
+                    if (state.turnStatus === 'ended') {
+                        uiStatus.textContent = "הזמן נגמר! מסכמים את התור...";
+                        uiStatus.style.fontSize = "18px";
+                        uiStatus.style.color = "#e74c3c";
+                        uiBtnStartTurn.classList.add('hidden');
+                    } else {
+                        if (myTeamId === currentTeam.id) {
+                            let canStart = true;
+                            if (isSingleTeamMode && currentTeam.playerCount > 1 && state.lastDescriberId === myPlayerId) {
+                                canStart = false; 
+                            }
+                            if (canStart) {
+                                uiBtnStartTurn.classList.remove('hidden');
+                                uiBtnStartTurn.textContent = `התחל משחק`;
+                            } else {
+                                uiBtnStartTurn.classList.add('hidden');
+                                uiStatus.textContent = `📢 ממתינים שחבר קבוצה אחר יתחיל את התור...`;
+                            }
+                        } else {
+                            uiBtnStartTurn.classList.add('hidden');
+                        }
+                        
+                        if (uiBtnStartTurn.classList.contains('hidden') === false || myTeamId !== currentTeam.id) {
+                            uiStatus.textContent = `📢 עכשיו תור הקבוצה ה${teamGrammarNames[currentTeam.id]}!`;
+                        }
+                        uiStatus.style.fontSize = "20px";
+                        uiStatus.style.color = teamColors[currentTeam.id] || '#333';
+                    }
+                }
+            };
+        }
+
+        uiBtnStartTurn.addEventListener('click', () => {
+            if (turnManager) turnManager.startTurn();
+        });
+
+        document.getElementById('btn-correct').addEventListener('click', () => {
+            if (turnManager) turnManager.drawCard(true);
+        });
+
+        document.getElementById('btn-skip').addEventListener('click', () => {
+            if (turnManager) turnManager.drawCard(false);
+        });
+
+        let fadeTimeout;
+        function loadCardIfNeeded(index, difficultyLevel) {
+            if (index === lastDisplayedCardIndex) return;
+            lastDisplayedCardIndex = index;
+
+            const card = cards[index];
+            if (!card) return;
+
+            uiCardContainer.classList.add('fade-out');
+            clearTimeout(fadeTimeout);
+            
+            fadeTimeout = setTimeout(() => {
+                document.getElementById('main-word').textContent = card.word;
+                document.getElementById('card-icon').textContent = card.icon || "🖼️";
+
+                let wordsLimit = 4;
+                if(difficultyLevel === 'easy') wordsLimit = 2;
+                if(difficultyLevel === 'hard') wordsLimit = 6;
+
+                const wordsToShow = card.taboo.slice(0, wordsLimit);
+
+                const uiTabooWords = document.getElementById('taboo-words');
+                uiTabooWords.innerHTML = '';
+                wordsToShow.forEach(word => {
+                    const li = document.createElement('li');
+                    li.textContent = word;
+                    uiTabooWords.appendChild(li);
+                });
+                uiCardContainer.classList.remove('fade-out');
+            }, 300);
+        }
+    </script>
+</body>
+</html>
