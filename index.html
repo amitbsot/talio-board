@@ -19,7 +19,7 @@
             touch-action: manipulation; /* מניעת זום בלחיצה כפולה בנייד */
         }
 
-                 /* --- מסך לובי כניסה --- */
+                    /* --- מסך לובי כניסה --- */
         #lobby {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -28,13 +28,14 @@
             flex-direction: column;
             justify-content: flex-start; /* הצמדה לחלק העליון */
             align-items: center;
-            padding-top: 20px; /* ריווח קבוע וקטן מלמעלה במקום באחוזים */
+            padding-top: 10px; /* רווח קטן מלמעלה */
+            gap: 12px; /* רווח אחיד בין כל האלמנטים */
             z-index: 100;
         }
 
-        /* איפוס שוליים עליונים לכותרות כדי שלא ידחפו את המסך למטה */
+        /* איפוס שוליים לכותרות כדי שלא ידחפו את המסך למטה */
         #lobby h1, #lobby h3 {
-            margin-top: 0; 
+            margin: 0;
         }
 
         .room-input {
@@ -42,8 +43,7 @@
             max-width: 300px;
             padding: 15px;
             font-size: 20px;
-            margin-top: 10px; /* ריווח קטן מלמעלה */
-            margin-bottom: 25px; /* ריווח מהכפתור שמתחתיו */
+            margin: 0; /* המרווח מנוהל ע"י gap */
             border: 2px solid #dcd5c6;
             border-radius: 12px;
             text-align: center;
@@ -63,9 +63,11 @@
             box-shadow: 0 4px 0 #2980B9;
             transition: transform 0.1s;
         }
-        .btn-join-room:active { transform: translateY(4px); box-shadow: none; }
 
-
+        .btn-join-room:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
         /* --- חלון הגדרות מודאלי --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
